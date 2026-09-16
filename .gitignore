@@ -1,0 +1,26 @@
+# === IDEs ===
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+
+# === Sistema Operativo ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === Logs ===
+*.log
+logs/
+
+# === Docker ===
+*.pid
+
+# === Variables de entorno ===
+.env
+.env.local
+*.env
