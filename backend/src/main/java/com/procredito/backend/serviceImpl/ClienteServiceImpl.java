@@ -1,4 +1,4 @@
-package com.procredito.backend.service.impl;
+package com.procredito.backend.serviceImpl;
 
 import com.procredito.backend.dto.ClienteRequest;
 import com.procredito.backend.dto.ClienteResponse;

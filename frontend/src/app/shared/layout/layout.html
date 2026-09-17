@@ -1,0 +1,84 @@
+<div class="layout" [class.sidebar-collapsed]="!menuAbierto()">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">💰</span>
+        @if (menuAbierto()) {
+          <span class="logo-text">ProCrédito</span>
+        }
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        class="nav-item"
+        [title]="menuAbierto() ? '' : 'Dashboard'"
+      >
+        <span class="nav-icon">📊</span>
+        @if (menuAbierto()) {
+          <span class="nav-label">Dashboard</span>
+        }
+      </a>
+
+      <a
+        routerLink="/clientes"
+        routerLinkActive="active"
+        class="nav-item"
+        [title]="menuAbierto() ? '' : 'Clientes'"
+      >
+        <span class="nav-icon">👥</span>
+        @if (menuAbierto()) {
+          <span class="nav-label">Clientes</span>
+        }
+      </a>
+
+      <a
+        routerLink="/solicitudes"
+        routerLinkActive="active"
+        class="nav-item"
+        [title]="menuAbierto() ? '' : 'Solicitudes'"
+      >
+        <span class="nav-icon">📋</span>
+        @if (menuAbierto()) {
+          <span class="nav-label">Solicitudes</span>
+        }
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ÁREA PRINCIPAL -->
+  <div class="main-area">
+
+    <!-- HEADER -->
+    <header class="topbar">
+      <button class="menu-toggle" (click)="toggleMenu()" title="Mostrar/Ocultar menú">
+        ☰
+      </button>
+
+      <div class="topbar-title">
+        <h2>Panel de Control</h2>
+      </div>
+
+      <div class="topbar-user">
+        @if (usuario(); as u) {
+          <div class="user-info">
+            <span class="user-name">{{ u.nombreCompleto }}</span>
+            <span class="user-role">{{ u.rol }}</span>
+          </div>
+        }
+        <button class="btn-logout" (click)="logout()" title="Cerrar sesión">
+          Salir
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENIDO (router-outlet carga aquí las páginas) -->
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

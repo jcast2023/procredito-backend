@@ -1,0 +1,62 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>ProCrédito</h1>
+      <p>Sistema de Gestión de Microcréditos</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input
+          id="username"
+          type="text"
+          name="username"
+          [ngModel]="username()"
+          (ngModelChange)="username.set($event)"
+          placeholder="admin"
+          autocomplete="username"
+          [disabled]="cargando()"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          [disabled]="cargando()"
+          required
+        />
+      </div>
+
+      @if (error()) {
+        <div class="error-message">
+          {{ error() }}
+        </div>
+      }
+
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="cargando()"
+      >
+        @if (cargando()) {
+          Iniciando sesión...
+        } @else {
+          Iniciar sesión
+        }
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <small>Usuarios de prueba: admin / admin123</small>
+    </div>
+  </div>
+</div>

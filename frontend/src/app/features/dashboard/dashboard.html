@@ -1,0 +1,84 @@
+<div class="dashboard">
+  <h1 class="page-title">Dashboard</h1>
+
+  @if (cargando()) {
+    <div class="loading">Cargando métricas...</div>
+  } @else if (error()) {
+    <div class="error-box">
+      {{ error() }}
+      <button class="btn-retry" (click)="cargarResumen()">Reintentar</button>
+    </div>
+  } @else if (resumen(); as r) {
+    <div class="metrics-grid">
+
+      <div class="metric-card">
+        <span class="metric-icon">👥</span>
+        <div class="metric-info">
+          <span class="metric-label">Total Clientes</span>
+          <span class="metric-value">{{ r.totalClientes }}</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-icon">📋</span>
+        <div class="metric-info">
+          <span class="metric-label">Total Solicitudes</span>
+          <span class="metric-value">{{ r.totalSolicitudes }}</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-icon">💵</span>
+        <div class="metric-info">
+          <span class="metric-label">Monto Solicitado</span>
+          <span class="metric-value">S/ {{ r.montoTotalSolicitado | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="metric-card highlight">
+        <span class="metric-icon">✅</span>
+        <div class="metric-info">
+          <span class="metric-label">Monto Desembolsado</span>
+          <span class="metric-value">S/ {{ r.montoTotalDesembolsado | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section">
+      <h2>Solicitudes por Estado</h2>
+      <div class="estados-grid">
+        <div class="estado-card pendiente">
+          <span class="estado-nombre">Pendiente</span>
+          <span class="estado-count">{{ r.solicitudesPorEstado.PENDIENTE }}</span>
+        </div>
+        <div class="estado-card aprobado">
+          <span class="estado-nombre">Aprobado</span>
+          <span class="estado-count">{{ r.solicitudesPorEstado.APROBADO }}</span>
+        </div>
+        <div class="estado-card rechazado">
+          <span class="estado-nombre">Rechazado</span>
+          <span class="estado-count">{{ r.solicitudesPorEstado.RECHAZADO }}</span>
+        </div>
+        <div class="estado-card desembolsado">
+          <span class="estado-nombre">Desembolsado</span>
+          <span class="estado-count">{{ r.solicitudesPorEstado.DESEMBOLSADO }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Promedios</h2>
+      <div class="promedios-grid">
+        <div class="promedio-card">
+          <span class="promedio-label">Promedio Monto Solicitado</span>
+          <span class="promedio-value">S/ {{ r.promedioMontoSolicitado | number:'1.2-2' }}</span>
+        </div>
+        <div class="promedio-card">
+          <span class="promedio-label">Promedio Cuota Mensual</span>
+          <span class="promedio-value">S/ {{ r.promedioCuotaMensual | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>
