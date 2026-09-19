@@ -1,10 +1,11 @@
 package com.procredito.backend.service;
 
-import com.procredito.backend.dto.AuthResponse;
-import com.procredito.backend.dto.LoginRequest;
-import com.procredito.backend.dto.RegisterRequest;
+import com.procredito.backend.dto.*;
 
 public interface AuthService {
     AuthResponse login(LoginRequest request);
     AuthResponse register(RegisterRequest request);
+    void solicitarReset(ResetPasswordRequest request);
+    void confirmarReset(ResetPasswordConfirmRequest request);
+
 }

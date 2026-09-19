@@ -54,4 +54,13 @@ public class ClienteController {
         clienteService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/existe-dni")
+    @Operation(summary = "Verificar si un DNI ya existe", description = "Retorna true si el DNI ya está registrado")
+    public ResponseEntity<Boolean> existeDni(@RequestParam String dni,
+                                             @RequestParam(required = false) Long excluirId) {
+        return ResponseEntity.ok(clienteService
+                .existeDni(dni, excluirId));
+    }
+
 }

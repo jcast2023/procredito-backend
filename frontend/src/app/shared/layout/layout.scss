@@ -1,18 +1,19 @@
 .layout {
   display: flex;
   min-height: 100vh;
-  background: #f1f5f9;
+  background: var(--color-gray-50);
 }
 
 /* ==================== SIDEBAR ==================== */
 .sidebar {
-  width: 240px;
-  background: #1e3a8a;
+  width: var(--sidebar-width);
+  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
   color: white;
   display: flex;
   flex-direction: column;
-  transition: width 0.25s ease;
+  transition: width var(--transition-base);
   flex-shrink: 0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
 }
 
 .sidebar-header {
@@ -25,13 +26,18 @@
     gap: 0.75rem;
 
     .logo-icon {
-      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fbbf24;
+      flex-shrink: 0;
     }
 
     .logo-text {
       font-size: 1.25rem;
       font-weight: 700;
       white-space: nowrap;
+      letter-spacing: -0.02em;
     }
   }
 }
@@ -50,9 +56,11 @@
   padding: 0.75rem 1rem;
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
   cursor: pointer;
   border-left: 3px solid transparent;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -63,14 +71,11 @@
     background: rgba(255, 255, 255, 0.15);
     border-left-color: #60a5fa;
     color: white;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
   }
 
-  .nav-icon {
-    font-size: 1.25rem;
+  lucide-icon {
     flex-shrink: 0;
-    width: 24px;
-    text-align: center;
   }
 
   .nav-label {
@@ -81,10 +86,15 @@
 /* Colapsado */
 .layout.sidebar-collapsed {
   .sidebar {
-    width: 64px;
+    width: var(--sidebar-width-collapsed);
   }
 
   .nav-item {
+    justify-content: center;
+    padding: 0.75rem;
+  }
+
+  .sidebar-header .logo {
     justify-content: center;
   }
 }
@@ -98,36 +108,40 @@
 }
 
 .topbar {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 0.75rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid var(--color-gray-200);
+  padding: 0.875rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-xs);
+  height: var(--header-height);
 }
 
 .menu-toggle {
   background: none;
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
-  color: #475569;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  transition: background 0.15s;
+  color: var(--color-gray-600);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    background: #f1f5f9;
+    background: var(--color-gray-100);
+    color: var(--color-primary);
   }
 }
 
 .topbar-title h2 {
   margin: 0;
-  font-size: 1.125rem;
-  color: #1e293b;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  color: var(--color-gray-800);
+  font-weight: var(--font-weight-semibold);
 }
 
 .topbar-user {
@@ -142,33 +156,45 @@
   align-items: flex-end;
 
   .user-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1e293b;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-800);
   }
 
   .user-role {
-    font-size: 0.75rem;
-    color: #64748b;
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: var(--font-weight-medium);
   }
 }
 
 .btn-logout {
-  background: #ef4444;
+  background: var(--color-danger);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.15s;
-  font-family: inherit;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 36px;
 
   &:hover {
-    background: #dc2626;
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  svg {
+    color: white;
+    stroke: white;
+    flex-shrink: 0;
   }
 }
 

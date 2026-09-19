@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest } from '../../../core/models';
 
+
 @Component({
   selector: 'app-login',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrl: './login.scss'
 })
@@ -21,6 +22,13 @@ export class LoginComponent {
   password = signal('');
   cargando = signal(false);
   error = signal<string | null>(null);
+
+  // NUEVO: mostrar/ocultar contraseña
+  mostrarPassword = signal(false);
+
+  toggleMostrarPassword(): void {
+    this.mostrarPassword.update(v => !v);
+  }
 
   onSubmit(): void {
     if (!this.username() || !this.password()) {
@@ -39,13 +47,11 @@ export class LoginComponent {
     this.authService.login(request).subscribe({
       next: () => {
         this.cargando.set(false);
-        // Redirige a returnUrl o a /dashboard
         const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {
         this.cargando.set(false);
-        // El backend devuelve 401/400 con body JSON
         this.error.set(
           err?.error?.error ||
           err?.error?.message ||

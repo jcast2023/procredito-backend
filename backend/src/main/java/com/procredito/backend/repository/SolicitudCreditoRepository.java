@@ -8,4 +8,6 @@ import java.util.List;
 public interface SolicitudCreditoRepository extends JpaRepository<SolicitudCredito, Long> {
     List<SolicitudCredito> findByEstado(EstadoSolicitud estado);
     List<SolicitudCredito> findByClienteId(Long clienteId);
+    boolean existsByClienteIdAndEstadoIn(Long clienteId, List<EstadoSolicitud> estados);
+
 }

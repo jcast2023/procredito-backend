@@ -3,7 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { LayoutComponent } from './shared/layout/layout';
 
 export const routes: Routes = [
-  // Ruta raíz → redirige a dashboard (si no hay sesión, el guard manda al login)
+  // Ruta raíz → redirige a dashboard
   {
     path: '',
     redirectTo: 'dashboard',
@@ -28,13 +28,57 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard').then(m => m.DashboardComponent)
       },
-      // Aquí agregaremos clientes y solicitudes después:
-      // { path: 'clientes', ... },
-      // { path: 'solicitudes', ... }
+
+      // ===== CLIENTES =====
+      {
+        path: 'clientes',
+        loadComponent: () =>
+          import('./features/clientes/lista-clientes/lista-clientes')
+            .then(m => m.ListaClientesComponent)
+      },
+      {
+        path: 'clientes/nuevo',
+        loadComponent: () =>
+          import('./features/clientes/form-cliente/form-cliente')
+            .then(m => m.FormClienteComponent)
+      },
+      {
+        path: 'clientes/:id/editar',
+        loadComponent: () =>
+          import('./features/clientes/form-cliente/form-cliente')
+            .then(m => m.FormClienteComponent)
+      },
+
+
+      // ===== SOLICITUDES =====
+      {
+        path: 'solicitudes',
+        loadComponent: () =>
+          import('./features/solicitudes/lista-solicitudes/lista-solicitudes')
+            .then(m => m.ListaSolicitudesComponent)
+      },
+      {
+  path: 'solicitudes/nueva',
+  loadComponent: () =>
+    import('./features/solicitudes/form-solicitud/form-solicitud')
+      .then(m => m.FormSolicitudComponent)
+}
     ]
   },
+  {
+    path: 'recuperar',
+    loadComponent: () =>
+      import('./features/auth/recuperar-password/recuperar-password')
+        .then(m => m.RecuperarPasswordComponent)
+  },
+  {
+    path: 'recuperar/confirmar',
+    loadComponent: () =>
+      import('./features/auth/confirmar-reset/confirmar-reset')
+        .then(m => m.ConfirmarResetComponent)
+  },
 
-  // Ruta comodín → cualquier ruta desconocida va al dashboard
+  // Ruta comodín
   {
     path: '**',
     redirectTo: 'dashboard'

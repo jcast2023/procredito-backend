@@ -12,7 +12,9 @@
     <div class="metrics-grid">
 
       <div class="metric-card">
-        <span class="metric-icon">👥</span>
+        <div class="metric-icon icon-blue">
+          <svg lucideUsers [size]="28"></svg>
+        </div>
         <div class="metric-info">
           <span class="metric-label">Total Clientes</span>
           <span class="metric-value">{{ r.totalClientes }}</span>
@@ -20,7 +22,9 @@
       </div>
 
       <div class="metric-card">
-        <span class="metric-icon">📋</span>
+        <div class="metric-icon icon-purple">
+          <svg lucideFileText [size]="28"></svg>
+        </div>
         <div class="metric-info">
           <span class="metric-label">Total Solicitudes</span>
           <span class="metric-value">{{ r.totalSolicitudes }}</span>
@@ -28,7 +32,9 @@
       </div>
 
       <div class="metric-card">
-        <span class="metric-icon">💵</span>
+        <div class="metric-icon icon-amber">
+          <svg lucideBanknote [size]="28"></svg>
+        </div>
         <div class="metric-info">
           <span class="metric-label">Monto Solicitado</span>
           <span class="metric-value">S/ {{ r.montoTotalSolicitado | number:'1.2-2' }}</span>
@@ -36,7 +42,9 @@
       </div>
 
       <div class="metric-card highlight">
-        <span class="metric-icon">✅</span>
+        <div class="metric-icon icon-green">
+          <svg lucideCheckCircle [size]="28"></svg>
+        </div>
         <div class="metric-info">
           <span class="metric-label">Monto Desembolsado</span>
           <span class="metric-value">S/ {{ r.montoTotalDesembolsado | number:'1.2-2' }}</span>
@@ -49,19 +57,31 @@
       <h2>Solicitudes por Estado</h2>
       <div class="estados-grid">
         <div class="estado-card pendiente">
-          <span class="estado-nombre">Pendiente</span>
+          <div class="estado-header">
+            <svg lucideClock [size]="18"></svg>
+            <span class="estado-nombre">Pendiente</span>
+          </div>
           <span class="estado-count">{{ r.solicitudesPorEstado.PENDIENTE }}</span>
         </div>
         <div class="estado-card aprobado">
-          <span class="estado-nombre">Aprobado</span>
+          <div class="estado-header">
+            <svg lucideCheckCircle [size]="18"></svg>
+            <span class="estado-nombre">Aprobado</span>
+          </div>
           <span class="estado-count">{{ r.solicitudesPorEstado.APROBADO }}</span>
         </div>
         <div class="estado-card rechazado">
-          <span class="estado-nombre">Rechazado</span>
+          <div class="estado-header">
+            <svg lucideXCircle [size]="18"></svg>
+            <span class="estado-nombre">Rechazado</span>
+          </div>
           <span class="estado-count">{{ r.solicitudesPorEstado.RECHAZADO }}</span>
         </div>
         <div class="estado-card desembolsado">
-          <span class="estado-nombre">Desembolsado</span>
+          <div class="estado-header">
+            <svg lucideBanknote [size]="18"></svg>
+            <span class="estado-nombre">Desembolsado</span>
+          </div>
           <span class="estado-count">{{ r.solicitudesPorEstado.DESEMBOLSADO }}</span>
         </div>
       </div>
@@ -71,12 +91,22 @@
       <h2>Promedios</h2>
       <div class="promedios-grid">
         <div class="promedio-card">
-          <span class="promedio-label">Promedio Monto Solicitado</span>
-          <span class="promedio-value">S/ {{ r.promedioMontoSolicitado | number:'1.2-2' }}</span>
+          <div class="promedio-icon">
+            <svg lucideTrendingUp [size]="22"></svg>
+          </div>
+          <div class="promedio-info">
+            <span class="promedio-label">Promedio Monto Solicitado</span>
+            <span class="promedio-value">S/ {{ r.promedioMontoSolicitado | number:'1.2-2' }}</span>
+          </div>
         </div>
         <div class="promedio-card">
-          <span class="promedio-label">Promedio Cuota Mensual</span>
-          <span class="promedio-value">S/ {{ r.promedioCuotaMensual | number:'1.2-2' }}</span>
+          <div class="promedio-icon">
+            <svg lucideCalendar [size]="22"></svg>
+          </div>
+          <div class="promedio-info">
+            <span class="promedio-label">Promedio Cuota Mensual</span>
+            <span class="promedio-value">S/ {{ r.promedioCuotaMensual | number:'1.2-2' }}</span>
+          </div>
         </div>
       </div>
     </div>

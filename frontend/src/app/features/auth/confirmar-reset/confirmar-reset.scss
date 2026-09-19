@@ -156,19 +156,4 @@
   text-align: center;
   color: #64748b;
   font-size: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
-
-.link-recuperar {
-  color: #3b82f6;
-  font-size: 0.875rem;
-  text-decoration: none;
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-

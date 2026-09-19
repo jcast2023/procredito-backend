@@ -21,6 +21,17 @@ spring:
         jdbc:
           fetch_size: 100
     open-in-view: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: julio.castillo.ita@gmail.com
+    password: mchjlqehkhouyzjv
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 8080
@@ -34,3 +45,4 @@ logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
     com.procredito.backend.security.JwtAuthenticationFilter: DEBUG
+

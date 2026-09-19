@@ -84,4 +84,19 @@ export class AuthService {
       return null;
     }
   }
+
+  /**
+ * Solicita un código de restablecimiento de contraseña al correo del usuario.
+ */
+solicitarReset(email: string): Observable<{ mensaje: string }> {
+  return this.http.post<{ mensaje: string }>(`${this.apiUrl}/solicitar-reset`, { email });
+}
+
+/**
+ * Confirma el restablecimiento con el token recibido por correo y la nueva contraseña.
+ */
+confirmarReset(token: string, nuevaPassword: string): Observable<{ mensaje: string }> {
+  return this.http.post<{ mensaje: string }>(`${this.apiUrl}/confirmar-reset`, { token, nuevaPassword });
+}
+
 }

@@ -10,4 +10,6 @@ public interface ClienteService {
     List<ClienteResponse> listarTodos();
     ClienteResponse actualizar(Long id, ClienteRequest request);
     void eliminar(Long id);
+    boolean existeDni(String dni, Long excluirId);
+
 }

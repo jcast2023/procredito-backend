@@ -3,7 +3,10 @@ package com.procredito.backend.serviceImpl;
 import com.procredito.backend.dto.ClienteRequest;
 import com.procredito.backend.dto.ClienteResponse;
 import com.procredito.backend.entity.Cliente;
+import com.procredito.backend.enums.EstadoSolicitud;
+import com.procredito.backend.exception.BusinessException;
 import com.procredito.backend.repository.ClienteRepository;
+import com.procredito.backend.repository.SolicitudCreditoRepository;
 import com.procredito.backend.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,12 +20,13 @@ import java.util.stream.Collectors;
 public class ClienteServiceImpl implements ClienteService {
 
     private final ClienteRepository clienteRepository;
+    private final SolicitudCreditoRepository solicitudRepository;
 
     @Override
     @Transactional
     public ClienteResponse crear(ClienteRequest request) {
         if (clienteRepository.existsByDocumento(request.getDocumento())) {
-            throw new RuntimeException("Ya existe un cliente con ese documento");
+            throw new BusinessException("Ya existe un cliente con ese documento");
         }
 
         Cliente cliente = Cliente.builder()
@@ -41,7 +45,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Transactional(readOnly = true)
     public ClienteResponse obtenerPorId(Long id) {
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new BusinessException("Cliente no encontrado"));
         return mapToResponse(cliente);
     }
 
@@ -58,7 +62,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Transactional
     public ClienteResponse actualizar(Long id, ClienteRequest request) {
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new BusinessException("Cliente no encontrado"));
 
         cliente.setNombres(request.getNombres());
         cliente.setTelefono(request.getTelefono());
@@ -72,9 +76,27 @@ public class ClienteServiceImpl implements ClienteService {
     @Transactional
     public void eliminar(Long id) {
         if (!clienteRepository.existsById(id)) {
-            throw new RuntimeException("Cliente no encontrado");
+            throw new BusinessException("Cliente no encontrado");
         }
+
+        boolean tieneSolicitudesActivas = solicitudRepository
+                .existsByClienteIdAndEstadoIn(id,
+                        List.of(EstadoSolicitud.APROBADO, EstadoSolicitud.DESEMBOLSADO));
+
+        if (tieneSolicitudesActivas) {
+            throw new BusinessException(
+                    "No se puede eliminar el cliente porque tiene solicitudes aprobadas o desembolsadas.");
+        }
+
         clienteRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean existeDni(String dni, Long excluirId) {
+        if (excluirId != null) {
+            return clienteRepository.existsByDocumentoAndIdNot(dni, excluirId);
+        }
+        return clienteRepository.existsByDocumento(dni);
     }
 
     private ClienteResponse mapToResponse(Cliente cliente) {

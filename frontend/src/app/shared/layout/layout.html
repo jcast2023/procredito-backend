@@ -4,7 +4,9 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo">
-        <span class="logo-icon">💰</span>
+        <div class="logo-icon">
+          <svg lucideBanknote [size]="28" [strokeWidth]="2.5"></svg>
+        </div>
         @if (menuAbierto()) {
           <span class="logo-text">ProCrédito</span>
         }
@@ -18,7 +20,7 @@
         class="nav-item"
         [title]="menuAbierto() ? '' : 'Dashboard'"
       >
-        <span class="nav-icon">📊</span>
+        <svg lucideLayoutDashboard [size]="20"></svg>
         @if (menuAbierto()) {
           <span class="nav-label">Dashboard</span>
         }
@@ -30,7 +32,7 @@
         class="nav-item"
         [title]="menuAbierto() ? '' : 'Clientes'"
       >
-        <span class="nav-icon">👥</span>
+        <svg lucideUsers [size]="20"></svg>
         @if (menuAbierto()) {
           <span class="nav-label">Clientes</span>
         }
@@ -42,7 +44,7 @@
         class="nav-item"
         [title]="menuAbierto() ? '' : 'Solicitudes'"
       >
-        <span class="nav-icon">📋</span>
+        <svg lucideFileText [size]="20"></svg>
         @if (menuAbierto()) {
           <span class="nav-label">Solicitudes</span>
         }
@@ -56,7 +58,7 @@
     <!-- HEADER -->
     <header class="topbar">
       <button class="menu-toggle" (click)="toggleMenu()" title="Mostrar/Ocultar menú">
-        ☰
+        <svg lucideMenu [size]="22"></svg>
       </button>
 
       <div class="topbar-title">
@@ -71,12 +73,13 @@
           </div>
         }
         <button class="btn-logout" (click)="logout()" title="Cerrar sesión">
-          Salir
+          <svg lucideLogOut [size]="16"></svg>
+          <span>Salir</span>
         </button>
       </div>
     </header>
 
-    <!-- CONTENIDO (router-outlet carga aquí las páginas) -->
+    <!-- CONTENIDO -->
     <main class="content">
       <router-outlet />
     </main>
