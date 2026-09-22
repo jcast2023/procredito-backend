@@ -27,4 +27,6 @@ public class ClienteRequest {
     @NotBlank(message = "El tipo de negocio es obligatorio")
     @Size(max = 100)
     private String tipoNegocio;
+
+    private Long analistaId;
 }

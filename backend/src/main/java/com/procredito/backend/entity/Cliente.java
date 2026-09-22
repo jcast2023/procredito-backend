@@ -30,4 +30,8 @@ public class Cliente {
 
     @Column(length = 100)
     private String tipoNegocio;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "analista_id", nullable = false)
+    private Usuario analista;
 }

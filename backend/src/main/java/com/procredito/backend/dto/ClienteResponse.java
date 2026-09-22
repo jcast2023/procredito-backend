@@ -12,4 +12,6 @@ public class ClienteResponse {
     private String telefono;
     private String direccion;
     private String tipoNegocio;
+    private Long analistaId;
+    private String analistaNombre;
 }

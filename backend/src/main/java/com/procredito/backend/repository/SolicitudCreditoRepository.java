@@ -9,5 +9,7 @@ public interface SolicitudCreditoRepository extends JpaRepository<SolicitudCredi
     List<SolicitudCredito> findByEstado(EstadoSolicitud estado);
     List<SolicitudCredito> findByClienteId(Long clienteId);
     boolean existsByClienteIdAndEstadoIn(Long clienteId, List<EstadoSolicitud> estados);
-
+    List<SolicitudCredito> findByClienteAnalistaId(Long analistaId);
+    List<SolicitudCredito> findByClienteAnalistaIdAndEstado(Long analistaId, EstadoSolicitud estado);
+    boolean existsByIdAndClienteAnalistaId(Long id, Long analistaId);
 }
