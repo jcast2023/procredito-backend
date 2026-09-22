@@ -5,6 +5,8 @@ export interface Cliente {
   telefono: string;
   direccion: string;
   tipoNegocio: string;
+  analistaId: number;
+  analistaNombre: string;
 }
 
 export interface ClienteRequest {
@@ -13,4 +15,9 @@ export interface ClienteRequest {
   telefono: string;
   direccion: string;
   tipoNegocio: string;
+  /**
+   * Solo lo envía el ADMIN al crear/editar.
+   * Si lo crea un ANALISTA, se ignora (el backend auto-asigna).
+   */
+  analistaId?: number;
 }

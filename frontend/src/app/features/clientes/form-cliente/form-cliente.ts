@@ -1,9 +1,11 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { ClienteService } from '../../../core/services/cliente.service';
-import { ClienteRequest } from '../../../core/models';
+import { UsuarioService } from '../../../core/services/usuario.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ClienteRequest, Usuario } from '../../../core/models';
 
 @Component({
   selector: 'app-form-cliente',
@@ -14,6 +16,8 @@ import { ClienteRequest } from '../../../core/models';
 export class FormClienteComponent implements OnInit {
 
   private readonly clienteService = inject(ClienteService);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -23,14 +27,26 @@ export class FormClienteComponent implements OnInit {
   readonly cargando = signal(false);
   readonly guardando = signal(false);
 
+  // Rol del usuario autenticado
+  readonly esAdmin = computed(() => this.authService.esAdmin());
+
+  // Lista de analistas (solo se carga si es admin)
+  readonly analistas = signal<Usuario[]>([]);
+
   // Campos del formulario
   documento = signal('');
   nombres = signal('');
   telefono = signal('');
   direccion = signal('');
   tipoNegocio = signal('');
+  analistaId = signal<number | null>(null);
 
   ngOnInit(): void {
+    // Si es admin, cargar la lista de analistas
+    if (this.esAdmin()) {
+      this.cargarAnalistas();
+    }
+
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
@@ -39,6 +55,21 @@ export class FormClienteComponent implements OnInit {
       this.clienteId.set(Number(id));
       this.cargarCliente(Number(id));
     }
+  }
+
+  cargarAnalistas(): void {
+    this.usuarioService.listarAnalistas().subscribe({
+      next: (data) => this.analistas.set(data),
+      error: (err) => {
+        console.error('Error al cargar analistas:', err);
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo cargar la lista de analistas.',
+          icon: 'error',
+          confirmButtonColor: '#dc2626'
+        });
+      }
+    });
   }
 
   cargarCliente(id: number): void {
@@ -51,6 +82,7 @@ export class FormClienteComponent implements OnInit {
         this.telefono.set(cliente.telefono || '');
         this.direccion.set(cliente.direccion || '');
         this.tipoNegocio.set(cliente.tipoNegocio || '');
+        this.analistaId.set(cliente.analistaId);
         this.cargando.set(false);
       },
       error: (err) => {
@@ -69,7 +101,6 @@ export class FormClienteComponent implements OnInit {
   }
 
   guardar(formCliente: NgForm): void {
-    // Marcar todos los campos como tocados para mostrar los errores
     formCliente.control?.markAllAsTouched();
 
     const doc = this.documento().trim();
@@ -111,7 +142,7 @@ export class FormClienteComponent implements OnInit {
       return;
     }
 
-    // Validación de tipo de negocio y dirección: obligatorios
+    // Validación de tipo de negocio y dirección
     if (!tipo || !dir) {
       Swal.fire({
         title: 'Campos incompletos',
@@ -122,7 +153,18 @@ export class FormClienteComponent implements OnInit {
       return;
     }
 
-    // Verificar DNI duplicado (solo en creación, o si cambió en edición)
+    // Validación ESPECIAL: si es ADMIN, debe elegir un analista
+    if (this.esAdmin() && !this.analistaId()) {
+      Swal.fire({
+        title: 'Analista requerido',
+        text: 'Como administrador, debe asignar un analista al cliente.',
+        icon: 'warning',
+        confirmButtonColor: '#1e3a8a'
+      });
+      return;
+    }
+
+    // Verificar DNI duplicado
     this.clienteService.existeDni(doc, this.modoEdicion() ? this.clienteId() : null).subscribe({
       next: (existe) => {
         if (existe) {
@@ -137,7 +179,6 @@ export class FormClienteComponent implements OnInit {
         this.enviar(doc, nom, tel, dir, tipo);
       },
       error: () => {
-        // Si falla la verificación, continuar (el backend validará)
         this.enviar(doc, nom, tel, dir, tipo);
       }
     });
@@ -153,6 +194,11 @@ export class FormClienteComponent implements OnInit {
       direccion: dir,
       tipoNegocio: tipo
     };
+
+    // Solo el admin envía analistaId (el analista se auto-asigna en el backend)
+    if (this.esAdmin() && this.analistaId()) {
+      request.analistaId = this.analistaId()!;
+    }
 
     const esEdicion = this.modoEdicion();
 

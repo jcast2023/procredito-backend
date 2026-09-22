@@ -1,7 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { ClienteService } from '../../../core/services/cliente.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Cliente } from '../../../core/models';
 
 @Component({
@@ -13,10 +14,13 @@ import { Cliente } from '../../../core/models';
 export class ListaClientesComponent implements OnInit {
 
   private readonly clienteService = inject(ClienteService);
+  private readonly authService = inject(AuthService);
 
   readonly clientes = signal<Cliente[]>([]);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
+
+  readonly esAdmin = computed(() => this.authService.esAdmin());
 
   ngOnInit(): void {
     this.cargarClientes();
@@ -69,7 +73,7 @@ export class ListaClientesComponent implements OnInit {
 
     if (!resultado.isConfirmed) return;
 
-    // ========== PASO 2: Loading mientras se elimina ==========
+    // ========== PASO 2: Loading ==========
     Swal.fire({
       title: 'Eliminando...',
       allowOutsideClick: false,
@@ -77,7 +81,6 @@ export class ListaClientesComponent implements OnInit {
     });
 
     this.clienteService.eliminar(cliente.id).subscribe({
-      // ========== PASO 3a: Éxito ==========
       next: () => {
         Swal.fire({
           title: '¡Eliminado!',
@@ -88,12 +91,9 @@ export class ListaClientesComponent implements OnInit {
         });
         this.cargarClientes();
       },
-
-      // ========== PASO 3b: Error (con detección de FK) ==========
       error: (err) => {
         console.error('Error al eliminar cliente:', err);
 
-        // Extraer el texto del error del backend
         const errorTexto: string =
           err?.error?.error ||
           err?.error?.message ||
@@ -110,7 +110,6 @@ export class ListaClientesComponent implements OnInit {
           errorTexto.includes('registro secundario');
 
         if (esErrorFK) {
-          // Mensaje amigable explicando el motivo
           Swal.fire({
             title: 'No se puede eliminar',
             html: `
@@ -150,7 +149,6 @@ export class ListaClientesComponent implements OnInit {
           return;
         }
 
-        // Otros errores (genéricos)
         Swal.fire({
           title: 'Error al eliminar',
           html: errorTexto || 'No se pudo eliminar el cliente. Intente nuevamente.',
