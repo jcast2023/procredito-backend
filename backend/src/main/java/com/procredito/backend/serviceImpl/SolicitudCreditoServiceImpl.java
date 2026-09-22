@@ -5,9 +5,13 @@ import com.procredito.backend.dto.SolicitudRequest;
 import com.procredito.backend.dto.SolicitudResponse;
 import com.procredito.backend.entity.Cliente;
 import com.procredito.backend.entity.SolicitudCredito;
+import com.procredito.backend.entity.Usuario;
 import com.procredito.backend.enums.EstadoSolicitud;
+import com.procredito.backend.enums.Rol;
+import com.procredito.backend.exception.BusinessException;
 import com.procredito.backend.repository.ClienteRepository;
 import com.procredito.backend.repository.SolicitudCreditoRepository;
+import com.procredito.backend.security.SecurityUtils;
 import com.procredito.backend.service.SolicitudCreditoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +23,6 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-import com.procredito.backend.exception.BusinessException;
 
 @Service
 @RequiredArgsConstructor
@@ -27,12 +30,28 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
 
     private final SolicitudCreditoRepository solicitudRepository;
     private final ClienteRepository clienteRepository;
+    private final SecurityUtils securityUtils;
 
+    // ============================================================
+    // CREAR
+    // ============================================================
     @Override
     @Transactional
     public SolicitudResponse crear(SolicitudRequest request) {
-        Cliente cliente = clienteRepository.findById(request.getClienteId())
-                .orElseThrow(() -> new BusinessException("Cliente no encontrado con ID: " + request.getClienteId()));
+        Usuario usuarioActual = securityUtils.getUsuarioAutenticado();
+
+        // Buscar cliente con validación de propiedad
+        Cliente cliente;
+        if (usuarioActual.getRol() == Rol.ADMIN) {
+            cliente = clienteRepository.findById(request.getClienteId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Cliente no encontrado con ID: " + request.getClienteId()));
+        } else {
+            cliente = clienteRepository.findByIdAndAnalistaId(
+                            request.getClienteId(), usuarioActual.getId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Cliente no encontrado o no tiene permiso para crear solicitudes para él."));
+        }
 
         BigDecimal cuota = calcularCuota(
                 request.getMontoSolicitado(),
@@ -54,42 +73,91 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         return mapToResponse(guardada);
     }
 
+    // ============================================================
+    // OBTENER POR ID
+    // ============================================================
     @Override
     @Transactional(readOnly = true)
     public SolicitudResponse obtenerPorId(Long id) {
+        Usuario usuarioActual = securityUtils.getUsuarioAutenticado();
+
         SolicitudCredito solicitud = solicitudRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Solicitud no encontrada"));
+
+        // Validar propiedad si no es admin
+        if (usuarioActual.getRol() != Rol.ADMIN) {
+            Long analistaId = solicitud.getCliente().getAnalista().getId();
+            if (!analistaId.equals(usuarioActual.getId())) {
+                throw new BusinessException("No tiene permiso para ver esta solicitud.");
+            }
+        }
+
         return mapToResponse(solicitud);
     }
 
+    // ============================================================
+    // LISTAR TODAS
+    // ============================================================
     @Override
     @Transactional(readOnly = true)
     public List<SolicitudResponse> listarTodas() {
-        return solicitudRepository.findAll()
-                .stream()
+        Usuario usuarioActual = securityUtils.getUsuarioAutenticado();
+        List<SolicitudCredito> solicitudes;
+
+        if (usuarioActual.getRol() == Rol.ADMIN) {
+            solicitudes = solicitudRepository.findAll();
+        } else {
+            solicitudes = solicitudRepository.findByClienteAnalistaId(usuarioActual.getId());
+        }
+
+        return solicitudes.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    // ============================================================
+    // LISTAR POR ESTADO
+    // ============================================================
     @Override
     @Transactional(readOnly = true)
     public List<SolicitudResponse> listarPorEstado(EstadoSolicitud estado) {
-        return solicitudRepository.findByEstado(estado)
-                .stream()
+        Usuario usuarioActual = securityUtils.getUsuarioAutenticado();
+        List<SolicitudCredito> solicitudes;
+
+        if (usuarioActual.getRol() == Rol.ADMIN) {
+            solicitudes = solicitudRepository.findByEstado(estado);
+        } else {
+            solicitudes = solicitudRepository.findByClienteAnalistaIdAndEstado(
+                    usuarioActual.getId(), estado);
+        }
+
+        return solicitudes.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    // ============================================================
+    // CAMBIAR ESTADO
+    // ============================================================
     @Override
     @Transactional
     public SolicitudResponse cambiarEstado(Long id, CambioEstadoRequest request) {
+        Usuario usuarioActual = securityUtils.getUsuarioAutenticado();
+
         SolicitudCredito solicitud = solicitudRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Solicitud no encontrada con ID: " + id));
+
+        // Validar propiedad si no es admin
+        if (usuarioActual.getRol() != Rol.ADMIN) {
+            Long analistaId = solicitud.getCliente().getAnalista().getId();
+            if (!analistaId.equals(usuarioActual.getId())) {
+                throw new BusinessException("No tiene permiso para cambiar el estado de esta solicitud.");
+            }
+        }
 
         EstadoSolicitud estadoActual = solicitud.getEstado();
         EstadoSolicitud nuevoEstado = request.getNuevoEstado();
 
-        // Validar transición permitida
         if (!esTransicionValida(estadoActual, nuevoEstado)) {
             throw new BusinessException(
                     "Transición de estado no permitida: " + estadoActual + " → " + nuevoEstado +
@@ -104,13 +172,9 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         return mapToResponse(solicitudRepository.save(solicitud));
     }
 
-    /**
-     * Reglas de negocio para transiciones de estado:
-     * PENDIENTE   → APROBADO | RECHAZADO
-     * APROBADO    → DESEMBOLSADO
-     * RECHAZADO   → (terminal, no permite cambios)
-     * DESEMBOLSADO→ (terminal, no permite cambios)
-     */
+    // ============================================================
+    // REGLAS DE TRANSICIÓN
+    // ============================================================
     private boolean esTransicionValida(EstadoSolicitud actual, EstadoSolicitud nuevo) {
         if (nuevo == null) return false;
 
@@ -130,9 +194,10 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         };
     }
 
-    // Cálculo de cuota - Sistema Francés simplificado
+    // ============================================================
+    // CÁLCULO DE CUOTA (Sistema Francés)
+    // ============================================================
     private BigDecimal calcularCuota(BigDecimal monto, BigDecimal tasaAnual, Integer plazoMeses) {
-        // Tasa mensual
         BigDecimal tasaMensual = tasaAnual
                 .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)
                 .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP);
@@ -141,7 +206,6 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
             return monto.divide(BigDecimal.valueOf(plazoMeses), 2, RoundingMode.HALF_UP);
         }
 
-        // Fórmula: Cuota = P * (i * (1+i)^n) / ((1+i)^n - 1)
         BigDecimal unoMasI = BigDecimal.ONE.add(tasaMensual);
         BigDecimal potencia = unoMasI.pow(plazoMeses, new MathContext(10));
 
@@ -151,6 +215,9 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         return numerador.divide(denominador, 2, RoundingMode.HALF_UP);
     }
 
+    // ============================================================
+    // MAP TO RESPONSE
+    // ============================================================
     private SolicitudResponse mapToResponse(SolicitudCredito s) {
         return SolicitudResponse.builder()
                 .id(s.getId())

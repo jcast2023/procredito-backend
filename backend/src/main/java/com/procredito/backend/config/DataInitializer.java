@@ -21,31 +21,41 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initUsuarios() {
         return args -> {
-            if (usuarioRepository.findByUsername("admin").isEmpty()) {
-                usuarioRepository.save(Usuario.builder()
-                        .username("admin")
-                        .password(passwordEncoder.encode("admin123"))
-                        .nombreCompleto("Administrador del Sistema")
-                        .rol(Rol.ADMIN)
-                        .activo(true)
-                        .build());
-                log.info("✅ Usuario ADMIN creado -> admin / admin123");
-            } else {
-                log.info("ℹ️ Usuario admin ya existe, no se crea de nuevo");
-            }
+            crearUsuarioSiNoExiste(
+                    "admin",
+                    "admin123",
+                    "Administrador del Sistema",
+                    Rol.ADMIN
+            );
 
-            if (usuarioRepository.findByUsername("analista").isEmpty()) {
-                usuarioRepository.save(Usuario.builder()
-                        .username("analista")
-                        .password(passwordEncoder.encode("analista123"))
-                        .nombreCompleto("Analista de Créditos")
-                        .rol(Rol.ANALISTA)
-                        .activo(true)
-                        .build());
-                log.info("✅ Usuario ANALISTA creado -> analista / analista123");
-            } else {
-                log.info("ℹ️ Usuario analista ya existe, no se crea de nuevo");
-            }
+            crearUsuarioSiNoExiste(
+                    "analista1",
+                    "analista123",
+                    "Ana Torres (Analista)",
+                    Rol.ANALISTA
+            );
+
+            crearUsuarioSiNoExiste(
+                    "analista2",
+                    "analista123",
+                    "Carlos Ramírez (Analista)",
+                    Rol.ANALISTA
+            );
         };
+    }
+
+    private void crearUsuarioSiNoExiste(String username, String password, String nombre, Rol rol) {
+        if (usuarioRepository.findByUsername(username).isEmpty()) {
+            usuarioRepository.save(Usuario.builder()
+                    .username(username)
+                    .password(passwordEncoder.encode(password))
+                    .nombreCompleto(nombre)
+                    .rol(rol)
+                    .activo(true)
+                    .build());
+            log.info("✅ Usuario {} creado -> {} / {}", rol, username, password);
+        } else {
+            log.info("ℹ️ Usuario {} ya existe, no se crea de nuevo", username);
+        }
     }
 }

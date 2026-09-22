@@ -24,43 +24,78 @@ public class ClienteController {
     private final ClienteService clienteService;
 
     @PostMapping
-    @Operation(summary = "Crear cliente", description = "Registra un nuevo microempresario")
+    @Operation(
+            summary = "Crear cliente",
+            description = "Registra un nuevo microempresario. " +
+                    "ADMIN: debe enviar 'analistaId' en el body. " +
+                    "ANALISTA: se auto-asigna como dueño."
+    )
     public ResponseEntity<ClienteResponse> crear(@Valid @RequestBody ClienteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteService.crear(request));
     }
 
     @GetMapping
-    @Operation(summary = "Listar clientes", description = "Obtiene todos los clientes registrados")
+    @Operation(
+            summary = "Listar clientes",
+            description = "ADMIN: ve todos los clientes. ANALISTA: ve solo los suyos."
+    )
     public ResponseEntity<List<ClienteResponse>> listar() {
         return ResponseEntity.ok(clienteService.listarTodos());
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener cliente por ID", description = "Busca un cliente por su ID")
+    @Operation(
+            summary = "Obtener cliente por ID",
+            description = "ADMIN: puede ver cualquier cliente. ANALISTA: solo los suyos."
+    )
     public ResponseEntity<ClienteResponse> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(clienteService.obtenerPorId(id));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar cliente", description = "Actualiza los datos de un cliente existente")
+    @Operation(
+            summary = "Actualizar cliente",
+            description = "ADMIN: puede reasignar el analista enviando 'analistaId'. " +
+                    "ANALISTA: solo puede editar sus propios clientes (no puede reasignar)."
+    )
     public ResponseEntity<ClienteResponse> actualizar(@PathVariable Long id,
                                                       @Valid @RequestBody ClienteRequest request) {
         return ResponseEntity.ok(clienteService.actualizar(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar cliente", description = "Elimina un cliente por su ID")
+    @Operation(
+            summary = "Eliminar cliente",
+            description = "Solo el dueño o el ADMIN pueden eliminar. " +
+                    "No se permite eliminar clientes con solicitudes aprobadas o desembolsadas."
+    )
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         clienteService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/existe-dni")
-    @Operation(summary = "Verificar si un DNI ya existe", description = "Retorna true si el DNI ya está registrado")
+    @Operation(
+            summary = "Verificar si un DNI ya existe",
+            description = "Retorna true si el DNI ya está registrado"
+    )
     public ResponseEntity<Boolean> existeDni(@RequestParam String dni,
                                              @RequestParam(required = false) Long excluirId) {
-        return ResponseEntity.ok(clienteService
-                .existeDni(dni, excluirId));
+        return ResponseEntity.ok(clienteService.existeDni(dni, excluirId));
     }
 
+    // ============================================================
+    // REASIGNAR ANALISTA (SOLO ADMIN)
+    // ============================================================
+    @PatchMapping("/{id}/reasignar")
+    @Operation(
+            summary = "Reasignar analista",
+            description = "Solo ADMIN. Permite reasignar un cliente a otro analista " +
+                    "(útil cuando un analista renuncia)."
+    )
+    public ResponseEntity<ClienteResponse> reasignar(
+            @PathVariable Long id,
+            @RequestParam Long nuevoAnalistaId) {
+        return ResponseEntity.ok(clienteService.reasignarAnalista(id, nuevoAnalistaId));
+    }
 }
