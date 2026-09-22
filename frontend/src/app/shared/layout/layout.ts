@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import {
   LucideLayoutDashboard,
@@ -6,7 +6,8 @@ import {
   LucideFileText,
   LucideMenu,
   LucideLogOut,
-  LucideBanknote
+  LucideBanknote,
+  LucideUserCog
 } from '@lucide/angular';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../core/services/auth.service';
@@ -22,7 +23,8 @@ import { AuthService } from '../../core/services/auth.service';
     LucideFileText,
     LucideMenu,
     LucideLogOut,
-    LucideBanknote
+    LucideBanknote,
+    LucideUserCog
   ],
   templateUrl: './layout.html',
   styleUrl: './layout.scss'
@@ -34,6 +36,7 @@ export class LayoutComponent {
 
   readonly usuario = this.authService.usuario;
   readonly menuAbierto = signal(true);
+  readonly esAdmin = computed(() => this.authService.esAdmin());
 
   toggleMenu(): void {
     this.menuAbierto.update(v => !v);

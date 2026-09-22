@@ -49,6 +49,21 @@
           <span class="nav-label">Solicitudes</span>
         }
       </a>
+
+      <!-- ===== USUARIOS (solo admin) ===== -->
+      @if (esAdmin()) {
+        <a
+          routerLink="/usuarios"
+          routerLinkActive="active"
+          class="nav-item"
+          [title]="menuAbierto() ? '' : 'Usuarios'"
+        >
+          <svg lucideUserCog [size]="20"></svg>
+          @if (menuAbierto()) {
+            <span class="nav-label">Usuarios</span>
+          }
+        </a>
+      }
     </nav>
   </aside>
 

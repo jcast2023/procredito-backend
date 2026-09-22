@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 import { LayoutComponent } from './shared/layout/layout';
 
 export const routes: Routes = [
@@ -49,7 +50,6 @@ export const routes: Routes = [
             .then(m => m.FormClienteComponent)
       },
 
-
       // ===== SOLICITUDES =====
       {
         path: 'solicitudes',
@@ -58,13 +58,38 @@ export const routes: Routes = [
             .then(m => m.ListaSolicitudesComponent)
       },
       {
-  path: 'solicitudes/nueva',
-  loadComponent: () =>
-    import('./features/solicitudes/form-solicitud/form-solicitud')
-      .then(m => m.FormSolicitudComponent)
-}
+        path: 'solicitudes/nueva',
+        loadComponent: () =>
+          import('./features/solicitudes/form-solicitud/form-solicitud')
+            .then(m => m.FormSolicitudComponent)
+      },
+
+      // ===== USUARIOS (solo ADMIN) =====
+      {
+        path: 'usuarios',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/usuarios/lista-usuarios/lista-usuarios')
+            .then(m => m.ListaUsuariosComponent)
+      },
+      {
+        path: 'usuarios/nuevo',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/usuarios/form-usuario/form-usuario')
+            .then(m => m.FormUsuarioComponent)
+      },
+      {
+        path: 'usuarios/:id/editar',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/usuarios/form-usuario/form-usuario')
+            .then(m => m.FormUsuarioComponent)
+      }
     ]
   },
+
+  // Rutas públicas de reset password
   {
     path: 'recuperar',
     loadComponent: () =>
