@@ -110,5 +110,68 @@
         </div>
       </div>
     </div>
+
+    <!-- ============ NUEVO: Resumen por Analista (solo ADMIN) ============ -->
+    @if (esAdmin() && analistasResumen().length > 0) {
+      <div class="section">
+        <h2>
+          <svg lucideUserCog [size]="20"></svg>
+          Resumen por Analista
+        </h2>
+
+        <div class="table-container">
+          <table class="tabla-analistas">
+            <thead>
+              <tr>
+                <th>Analista</th>
+                <th class="num">Clientes</th>
+                <th class="num">Solicitudes</th>
+                <th class="num">Pendientes</th>
+                <th class="num">Aprobadas</th>
+                <th class="num">Desembolsadas</th>
+                <th class="num">Monto Solicitado</th>
+                <th class="num">Monto Desembolsado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of analistasResumen(); track a.analistaId) {
+                <tr>
+                  <td>
+                    <div class="analista-cell">
+                      <div class="analista-avatar">
+                        {{ a.analistaNombre.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="analista-info">
+                        <span class="analista-nombre">{{ a.analistaNombre }}</span>
+                        <span class="analista-username">&#64;{{ a.analistaUsername }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="num">{{ a.totalClientes }}</td>
+                  <td class="num">{{ a.totalSolicitudes }}</td>
+                  <td class="num pendiente">{{ a.solicitudesPendientes }}</td>
+                  <td class="num aprobado">{{ a.solicitudesAprobadas }}</td>
+                  <td class="num desembolsado">{{ a.solicitudesDesembolsadas }}</td>
+                  <td class="num">S/ {{ a.montoTotalSolicitado | number:'1.2-2' }}</td>
+                  <td class="num destacado">S/ {{ a.montoTotalDesembolsado | number:'1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td><strong>TOTAL</strong></td>
+                <td class="num"><strong>{{ totalesAnalistas().clientes }}</strong></td>
+                <td class="num"><strong>{{ totalesAnalistas().solicitudes }}</strong></td>
+                <td class="num"><strong>—</strong></td>
+                <td class="num"><strong>—</strong></td>
+                <td class="num"><strong>—</strong></td>
+                <td class="num"><strong>S/ {{ totalesAnalistas().montoSolicitado | number:'1.2-2' }}</strong></td>
+                <td class="num destacado"><strong>S/ {{ totalesAnalistas().montoDesembolsado | number:'1.2-2' }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    }
   }
 </div>

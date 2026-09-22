@@ -1,24 +1,34 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
+import {
+  LucideInfo,
+  LucideCheck,
+  LucideX,
+  LucideBanknote
+} from '@lucide/angular';
 import Swal from 'sweetalert2';
 import { SolicitudService } from '../../../core/services/solicitud.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Solicitud, EstadoSolicitud } from '../../../core/models';
 
 @Component({
   selector: 'app-lista-solicitudes',
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, LucideInfo, LucideCheck, LucideX, LucideBanknote],
   templateUrl: './lista-solicitudes.html',
   styleUrl: './lista-solicitudes.scss'
 })
 export class ListaSolicitudesComponent implements OnInit {
 
   private readonly solicitudService = inject(SolicitudService);
+  private readonly authService = inject(AuthService);
 
   readonly solicitudes = signal<Solicitud[]>([]);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly filtroEstado = signal<EstadoSolicitud | 'TODAS'>('TODAS');
+
+  readonly esAdmin = computed(() => this.authService.esAdmin());
 
   readonly estados: (EstadoSolicitud | 'TODAS')[] = [
     'TODAS', 'PENDIENTE', 'APROBADO', 'RECHAZADO', 'DESEMBOLSADO'
@@ -55,11 +65,7 @@ export class ListaSolicitudesComponent implements OnInit {
     this.filtroEstado.set(estado);
   }
 
-  /**
-   * Cambio de estado con SweetAlert2 (confirmación bonita)
-   */
   async cambiarEstado(solicitud: Solicitud, nuevoEstado: EstadoSolicitud): Promise<void> {
-
     const { icono, titulo, color, textoBoton } = this.configMensaje(nuevoEstado);
 
     const resultado = await Swal.fire({
@@ -86,7 +92,6 @@ export class ListaSolicitudesComponent implements OnInit {
 
     if (!resultado.isConfirmed) return;
 
-    // Mostrar loading mientras se procesa
     Swal.fire({
       title: 'Procesando...',
       html: 'Actualizando estado de la solicitud',
@@ -119,9 +124,6 @@ export class ListaSolicitudesComponent implements OnInit {
     });
   }
 
-  /**
-   * Configuración de icono, título y color según el nuevo estado
-   */
   private configMensaje(nuevoEstado: EstadoSolicitud): {
     icono: 'question' | 'warning' | 'success' | 'info';
     titulo: string;

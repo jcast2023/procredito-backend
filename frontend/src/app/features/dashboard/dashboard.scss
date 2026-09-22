@@ -227,3 +227,143 @@
     color: var(--color-gray-900);
   }
 }
+/* ============================================
+   Resumen por Analista (solo admin)
+   ============================================ */
+.section h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-container {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+.tabla-analistas {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+
+  thead {
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+
+    th {
+      padding: 0.875rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      &.num {
+        text-align: right;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.15s;
+
+      &:hover {
+        background: #f8fafc;
+      }
+    }
+
+    td {
+      padding: 0.875rem 1rem;
+      color: #334155;
+      font-size: 0.875rem;
+      vertical-align: middle;
+
+      &.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      &.pendiente {
+        color: #92400e;
+        font-weight: 600;
+      }
+
+      &.aprobado {
+        color: #1e40af;
+        font-weight: 600;
+      }
+
+      &.desembolsado {
+        color: #065f46;
+        font-weight: 600;
+      }
+
+      &.destacado {
+        color: #065f46;
+        font-weight: 700;
+      }
+    }
+  }
+
+  tfoot {
+    background: #f1f5f9;
+    border-top: 2px solid #e2e8f0;
+
+    td {
+      padding: 0.875rem 1rem;
+      font-size: 0.875rem;
+      color: #1e293b;
+
+      &.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      &.destacado {
+        color: #065f46;
+      }
+    }
+  }
+
+  .analista-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .analista-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .analista-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+
+      .analista-nombre {
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .analista-username {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+    }
+  }
+}

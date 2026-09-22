@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import {
   LucideUsers,
@@ -9,10 +9,12 @@ import {
   LucideXCircle,
   LucideTrendingUp,
   LucideCalendar,
-  LucideRefreshCw
+  LucideRefreshCw,
+  LucideUserCog
 } from '@lucide/angular';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { DashboardResumen } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
+import { DashboardResumen, AnalistaResumen } from '../../core/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,7 +29,8 @@ import { DashboardResumen } from '../../core/models';
     LucideXCircle,
     LucideTrendingUp,
     LucideCalendar,
-    LucideRefreshCw
+    LucideRefreshCw,
+    LucideUserCog
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
@@ -35,13 +38,29 @@ import { DashboardResumen } from '../../core/models';
 export class DashboardComponent implements OnInit, OnDestroy {
 
   private readonly dashboardService = inject(DashboardService);
+  private readonly authService = inject(AuthService);
+
   private readonly refreshInterval = 30000;
   private timer?: ReturnType<typeof setInterval>;
 
   readonly resumen = signal<DashboardResumen | null>(null);
+  readonly analistasResumen = signal<AnalistaResumen[]>([]);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly ultimaActualizacion = signal<Date | null>(null);
+
+  readonly esAdmin = computed(() => this.authService.esAdmin());
+
+  // Totales calculados de la tabla por analista
+  readonly totalesAnalistas = computed(() => {
+    const lista = this.analistasResumen();
+    return {
+      clientes: lista.reduce((sum, a) => sum + a.totalClientes, 0),
+      solicitudes: lista.reduce((sum, a) => sum + a.totalSolicitudes, 0),
+      montoSolicitado: lista.reduce((sum, a) => sum + a.montoTotalSolicitado, 0),
+      montoDesembolsado: lista.reduce((sum, a) => sum + a.montoTotalDesembolsado, 0)
+    };
+  });
 
   ngOnInit(): void {
     this.cargarResumen();
@@ -55,7 +74,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   cargarResumen(): void {
-    // Solo muestra el spinner la primera vez; en recargas automáticas actualiza en silencio
     if (!this.resumen()) {
       this.cargando.set(true);
     }
@@ -73,6 +91,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.error(err);
       }
     });
+
+    // Cargar resumen por analista solo si es admin
+    if (this.esAdmin()) {
+      this.dashboardService.obtenerResumenPorAnalista().subscribe({
+        next: (data) => this.analistasResumen.set(data),
+        error: (err) => console.error('Error al cargar resumen por analista:', err)
+      });
+    }
   }
 
   porcentajeDesembolsado(): number {

@@ -5,9 +5,16 @@
       <h1>Solicitudes de Crédito</h1>
       <p class="subtitle">Gestión de solicitudes de microcréditos</p>
     </div>
-    <a routerLink="/solicitudes/nueva" class="btn-primary">
-      + Nueva Solicitud
-    </a>
+    @if (!esAdmin()) {
+      <a routerLink="/solicitudes/nueva" class="btn-primary">
+        + Nueva Solicitud
+      </a>
+    } @else {
+      <div class="admin-info" title="El administrador solo supervisa y aprueba solicitudes">
+        <svg lucideInfo [size]="16"></svg>
+        <span>Solo supervisión</span>
+      </div>
+    }
   </div>
 
   <!-- Filtros por estado -->
@@ -35,7 +42,9 @@
     <div class="empty-state">
       @if (filtroEstado() === 'TODAS') {
         <p>No hay solicitudes registradas aún.</p>
-        <a routerLink="/solicitudes/nueva" class="btn-primary">Registrar la primera solicitud</a>
+        @if (!esAdmin()) {
+          <a routerLink="/solicitudes/nueva" class="btn-primary">Registrar la primera solicitud</a>
+        }
       } @else {
         <p>No hay solicitudes en estado <strong>{{ filtroEstado() }}</strong>.</p>
       }
@@ -75,42 +84,34 @@
                 </span>
               </td>
               <td class="col-actions">
-  @if (transicionesValidas(sol.estado).length > 0) {
-    @for (nuevoEstado of transicionesValidas(sol.estado); track nuevoEstado) {
-      <button
-        class="btn-action"
-        [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
-        [title]="'Cambiar a ' + nuevoEstado"
-        (click)="cambiarEstado(sol, nuevoEstado)"
-      >
-        @switch (nuevoEstado) {
-          @case ('APROBADO') {
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-            Aprobar
-          }
-          @case ('RECHAZADO') {
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18"/>
-              <path d="m6 6 12 12"/>
-            </svg>
-            Rechazar
-          }
-          @case ('DESEMBOLSADO') {
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-            Desembolsar
-          }
-        }
-      </button>
-    }
-  } @else {
-    <span class="sin-acciones">—</span>
-  }
-</td>
-
+                @if (transicionesValidas(sol.estado).length > 0) {
+                  @for (nuevoEstado of transicionesValidas(sol.estado); track nuevoEstado) {
+                    <button
+                      class="btn-action"
+                      [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
+                      [title]="'Cambiar a ' + nuevoEstado"
+                      (click)="cambiarEstado(sol, nuevoEstado)"
+                    >
+                      @switch (nuevoEstado) {
+                        @case ('APROBADO') {
+                          <svg lucideCheck [size]="14"></svg>
+                          Aprobar
+                        }
+                        @case ('RECHAZADO') {
+                          <svg lucideX [size]="14"></svg>
+                          Rechazar
+                        }
+                        @case ('DESEMBOLSADO') {
+                          <svg lucideBanknote [size]="14"></svg>
+                          Desembolsar
+                        }
+                      }
+                    </button>
+                  }
+                } @else {
+                  <span class="sin-acciones">—</span>
+                }
+              </td>
             </tr>
           }
         </tbody>

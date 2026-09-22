@@ -40,18 +40,21 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
     public SolicitudResponse crear(SolicitudRequest request) {
         Usuario usuarioActual = securityUtils.getUsuarioAutenticado();
 
-        // Buscar cliente con validación de propiedad
-        Cliente cliente;
+        // ============================================================
+        // BLOQUEO: el ADMIN no crea solicitudes, solo supervisa.
+        // ============================================================
         if (usuarioActual.getRol() == Rol.ADMIN) {
-            cliente = clienteRepository.findById(request.getClienteId())
-                    .orElseThrow(() -> new BusinessException(
-                            "Cliente no encontrado con ID: " + request.getClienteId()));
-        } else {
-            cliente = clienteRepository.findByIdAndAnalistaId(
-                            request.getClienteId(), usuarioActual.getId())
-                    .orElseThrow(() -> new BusinessException(
-                            "Cliente no encontrado o no tiene permiso para crear solicitudes para él."));
+            throw new BusinessException(
+                    "El administrador no puede crear solicitudes. " +
+                            "Solo supervisa. Pida al analista asignado que lo haga."
+            );
         }
+
+        // Buscar cliente con validación de propiedad (solo ANALISTA)
+        Cliente cliente = clienteRepository.findByIdAndAnalistaId(
+                        request.getClienteId(), usuarioActual.getId())
+                .orElseThrow(() -> new BusinessException(
+                        "Cliente no encontrado o no tiene permiso para crear solicitudes para él."));
 
         BigDecimal cuota = calcularCuota(
                 request.getMontoSolicitado(),
@@ -72,7 +75,6 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         SolicitudCredito guardada = solicitudRepository.save(solicitud);
         return mapToResponse(guardada);
     }
-
     // ============================================================
     // OBTENER POR ID
     // ============================================================

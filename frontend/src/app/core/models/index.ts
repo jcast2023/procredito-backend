@@ -4,3 +4,4 @@ export * from './usuario.model';
 export * from './cliente.model';
 export * from './solicitud.model';
 export * from './dashboard.model';
+export * from './analista-resumen.model';

@@ -2,8 +2,10 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
+import Swal from 'sweetalert2';
 import { SolicitudService } from '../../../core/services/solicitud.service';
 import { ClienteService } from '../../../core/services/cliente.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Cliente, SolicitudRequest } from '../../../core/models';
 
 @Component({
@@ -16,23 +18,19 @@ export class FormSolicitudComponent implements OnInit {
 
   private readonly solicitudService = inject(SolicitudService);
   private readonly clienteService = inject(ClienteService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  // Lista de clientes para el dropdown
   readonly clientes = signal<Cliente[]>([]);
   readonly cargandoClientes = signal(true);
-
-  // Estado del formulario
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
 
-  // Campos del formulario
   clienteId = signal<number | null>(null);
   montoSolicitado = signal<number | null>(null);
   tasaInteres = signal<number>(18);
   plazoMeses = signal<number>(12);
 
-  // Cálculo en vivo de la cuota estimada
   readonly cuotaEstimada = computed(() => {
     const monto = this.montoSolicitado();
     const tasa = this.tasaInteres();
@@ -63,6 +61,19 @@ export class FormSolicitudComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Bloqueo: admin no crea solicitudes
+    if (this.authService.esAdmin()) {
+      Swal.fire({
+        title: 'Acción no permitida',
+        text: 'El administrador no crea solicitudes. Solo supervisa. Pida al analista asignado que lo haga.',
+        icon: 'info',
+        confirmButtonColor: '#1e3a8a'
+      }).then(() => {
+        this.router.navigate(['/solicitudes']);
+      });
+      return;
+    }
+
     this.cargarClientes();
   }
 
@@ -74,7 +85,6 @@ export class FormSolicitudComponent implements OnInit {
         this.clientes.set(data);
         this.cargandoClientes.set(false);
 
-        // Si solo hay un cliente, pre-seleccionarlo
         if (data.length === 1) {
           this.clienteId.set(data[0].id);
         }
