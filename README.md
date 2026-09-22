@@ -3,23 +3,31 @@
 [![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen?logo=springboot)](https://spring.io/projects/spring-boot)
 [![Oracle](https://img.shields.io/badge/Oracle-Free%2023-red?logo=oracle)](https://www.oracle.com/database/free/)
+[![Angular](https://img.shields.io/badge/Angular-21-red?logo=angular)](https://angular.io/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
 [![JWT](https://img.shields.io/badge/Auth-JWT-black?logo=jsonwebtokens)](https://jwt.io/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-> **Sistema backend de gestión de microcréditos para microempresas**, inspirado en el modelo de negocio de financieras peruanas como ProEmpresa. Permite registrar microempresarios, gestionar solicitudes de crédito con cálculo automático de cuotas (sistema francés), validar transiciones de estado y obtener métricas agregadas de la cartera.
+> **Sistema full-stack de gestión de microcréditos para microempresas**, inspirado en el modelo de negocio de financieras peruanas como ProEmpresa. Backend Spring Boot 4 + Oracle 23ai + Frontend Angular 21. Permite registrar microempresarios, gestionar solicitudes de crédito con cálculo automático de cuotas (sistema francés), validar transiciones de estado, administrar usuarios y obtener métricas agregadas por analista.
 
 ---
 
 ## 📋 Descripción
 
-**ProCrédito** es una API REST profesional desarrollada con **Spring Boot 4** y **Oracle Database 23 Free**, diseñada para servir como backend de un sistema de gestión de microcréditos. Implementa autenticación con **JWT**, control de acceso por roles (**ADMIN / ANALISTA**), y sigue las mejores prácticas de desarrollo empresarial: arquitectura por capas, DTOs con validación, manejo global de excepciones y documentación con **OpenAPI/Swagger**.
+**ProCrédito** es una aplicación **full-stack** profesional desarrollada con:
 
-El sistema está **completamente dockerizado**, lo que permite levantar el stack completo (base de datos + aplicación) con un solo comando.
+- **Backend**: Spring Boot 4 + Oracle Database 23 Free + JWT
+- **Frontend**: Angular 21 + TypeScript + Angular Material + SCSS
+
+Implementa un modelo **multi-usuario con control de acceso basado en roles** (RBAC) y **segregación de funciones**, siguiendo las mejores prácticas de desarrollo empresarial: arquitectura por capas, DTOs con validación, manejo global de excepciones, documentación OpenAPI/Swagger y despliegue con Docker.
+
+El sistema está **completamente dockerizado**, lo que permite levantar el backend + base de datos con un solo comando.
 
 ---
 
 ## 🚀 Stack Tecnológico
+
+### Backend
 
 | Capa | Tecnología | Versión |
 |------|-----------|---------|
@@ -31,7 +39,20 @@ El sistema está **completamente dockerizado**, lo que permite levantar el stack
 | **Documentación** | SpringDoc OpenAPI (Swagger UI) | 2.8.5 |
 | **Build** | Maven | 3.9 |
 | **Contenedores** | Docker + Docker Compose | Latest |
-| **Testing** | JUnit 5 + Mockito + Spring Boot Test | (planificado) |
+| **Testing** | JUnit 5 + Mockito | (planificado) |
+
+### Frontend
+
+| Capa | Tecnología | Versión |
+|------|-----------|---------|
+| **Lenguaje** | TypeScript | 5.6+ |
+| **Framework** | Angular | 21.x |
+| **UI Components** | Angular Material | 21.x |
+| **Iconos** | Lucide Angular | 1.46 |
+| **Gráficos** | Chart.js + ng2-charts | Latest |
+| **Alertas** | SweetAlert2 | Latest |
+| **Estilos** | SCSS + Design System con variables CSS | — |
+| **Tipografía** | Inter (Google Fonts) | — |
 
 ---
 
@@ -41,14 +62,14 @@ El proyecto sigue una **arquitectura en capas** clásica de Spring Boot:
 
 ```
 com.procredito.backend
-├── config/              → Configuración (Security, OpenAPI, DataInitializer)
-├── controller/          → Endpoints REST (Auth, Cliente, Solicitud, Dashboard)
+├── config/              → Configuración (Security, OpenAPI, CORS, DataInitializer)
+├── controller/          → Endpoints REST (Auth, Cliente, Solicitud, Usuario, Dashboard)
 ├── dto/                 → Objetos de transferencia (Request/Response)
 ├── entity/              → Entidades JPA (Usuario, Cliente, SolicitudCredito)
 ├── enums/               → Enumeraciones (Rol, EstadoSolicitud)
 ├── exception/           → Manejo global de excepciones
 ├── repository/          → Interfaces Spring Data JPA
-├── security/            → Filtros JWT, CustomUserDetailsService, JwtService
+├── security/            → Filtros JWT, CustomUserDetailsService, JwtService, SecurityUtils
 ├── service/             → Interfaces de servicios (contratos)
 └── serviceImpl/         → Implementaciones de servicios (lógica de negocio)
 ```
@@ -56,19 +77,22 @@ com.procredito.backend
 ### Diagrama de flujo
 
 ```
-[Cliente HTTP]
+[Cliente HTTP] (Angular / Android / Swagger)
       │
       ▼
-[JwtAuthenticationFilter] ─── Valida token JWT
+[CORS Filter] ────────────── Valida origen permitido
+      │
+      ▼
+[JwtAuthenticationFilter] ── Valida token JWT
       │
       ▼
 [Controller] ─────────────── Valida DTO (@Valid)
       │
       ▼
-[Service] ───────────────── Reglas de negocio
+[Service] ────────────────── Reglas de negocio + filtrado por rol
       │
       ▼
-[Repository] ────────────── Spring Data JPA
+[Repository] ─────────────── Spring Data JPA
       │
       ▼
 [Oracle Database]
@@ -80,62 +104,92 @@ com.procredito.backend
 
 ### 🔐 Autenticación y Seguridad
 - ✅ Login con JWT (token válido 24 horas)
-- ✅ Registro de usuarios con roles (`ADMIN` / `ANALISTA`)
 - ✅ Contraseñas encriptadas con BCrypt
-- ✅ Rutas públicas (`/api/auth/**`, Swagger) y protegidas
+- ✅ Roles: `ADMIN` y `ANALISTA`
 - ✅ Filtro JWT con manejo robusto de tokens inválidos
+- ✅ Recuperación de contraseña por email (token con expiración)
+- ✅ Usuarios inactivos bloqueados para login
+
+### 🎭 Roles y Permisos (RBAC + Segregación de Funciones)
+
+| Acción | ADMIN | ANALISTA |
+|--------|:-----:|:--------:|
+| Ver **todos** los clientes | ✅ | ❌ |
+| Ver **solo sus** clientes | — | ✅ |
+| Crear cliente | ✅ (asignando un analista) | ✅ (auto-asignado) |
+| Editar/eliminar cliente | ✅ (cualquiera) | ✅ (solo los suyos) |
+| Reasignar cliente a otro analista | ✅ | ❌ |
+| Crear solicitud de crédito | ❌ | ✅ (solo para sus clientes) |
+| Ver todas las solicitudes | ✅ | ❌ |
+| Ver solo sus solicitudes | — | ✅ |
+| Aprobar/Rechazar/Desembolsar | ✅ (supervisión) | ✅ (solo las suyas) |
+| Gestionar usuarios | ✅ | ❌ |
+| Ver dashboard global | ✅ | ❌ |
+| Ver dashboard por analista | ✅ | ❌ |
+| Ver su propio dashboard | ✅ | ✅ |
+
+> 💡 **Regla de negocio clave**: el **ADMIN supervisa** y puede **intervenir** en cualquier solicitud, pero **NO capta clientes ni crea solicitudes**. Esto refleja el modelo real de una financiera de microcréditos.
 
 ### 👥 Gestión de Clientes (Microempresarios)
 - ✅ Crear cliente con validación de documento único (DNI/RUC)
-- ✅ Listar todos los clientes
+- ✅ Listar clientes (según rol: admin ve todos, analista solo los suyos)
 - ✅ Obtener cliente por ID
 - ✅ Actualizar datos del cliente
-- ✅ Eliminar cliente
+- ✅ Eliminar cliente (con validación de solicitudes activas)
+- ✅ Reasignar cliente a otro analista (solo admin)
 
 ### 💰 Gestión de Solicitudes de Crédito
 - ✅ Crear solicitud con **cálculo automático de cuota** (sistema francés)
-- ✅ Listar todas las solicitudes
+- ✅ Listar solicitudes (según rol)
 - ✅ Listar solicitudes por estado
-- ✅ Obtener solicitud por ID
 - ✅ Cambiar estado con **validación de transiciones**:
   - `PENDIENTE` → `APROBADO` o `RECHAZADO`
   - `APROBADO` → `DESEMBOLSADO`
   - `RECHAZADO` y `DESEMBOLSADO` son terminales
 
+### 👤 Gestión de Usuarios (solo ADMIN)
+- ✅ Crear usuarios (ADMIN / ANALISTA)
+- ✅ Editar usuarios (nombre, email, rol)
+- ✅ Activar/desactivar usuarios (soft delete)
+- ✅ Validación: username único, email único
+- ✅ No se puede desactivar a sí mismo
+
 ### 📊 Dashboard
-- ✅ Total de clientes registrados
-- ✅ Total de solicitudes
-- ✅ Monto total solicitado
-- ✅ Monto total desembolsado
+- ✅ Total de clientes, solicitudes y montos
 - ✅ Conteo de solicitudes por estado
-- ✅ Promedio de monto solicitado
-- ✅ Promedio de cuota mensual
+- ✅ Promedios de monto y cuota
+- ✅ **Dashboard por analista** (solo admin): tabla comparativa con métricas individuales
 
 ### 🛡️ Calidad de Código
 - ✅ Manejo global de excepciones (`@RestControllerAdvice`)
-- ✅ Validación con Bean Validation (`@NotBlank`, `@NotNull`, `@DecimalMin`, etc.)
+- ✅ Validación con Bean Validation (`@NotBlank`, `@NotNull`, `@Email`, etc.)
 - ✅ DTOs desacoplados de las entidades
 - ✅ Documentación interactiva con Swagger UI
+- ✅ Frontend con Standalone Components + Signals (Angular 21)
+- ✅ Design System con variables CSS
+- ✅ Iconos SVG profesionales (Lucide)
+- ✅ Alertas modernas (SweetAlert2)
 
 ---
 
 ## 📦 Requisitos Previos
 
-### Opción 1: Ejecutar con Docker (Recomendado)
+### Opción 1: Ejecutar con Docker (Backend + BD)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado
 - Al menos 4 GB de RAM disponible para Docker
 
-### Opción 2: Ejecutar Localmente
+### Opción 2: Ejecutar todo localmente
 - [Java 21 JDK](https://adoptium.net/)
 - [Maven 3.9+](https://maven.apache.org/)
+- [Node.js 22+](https://nodejs.org/) y npm
+- [Angular CLI 21+](https://angular.io/cli)
 - [Oracle Database Free 23ai](https://www.oracle.com/database/free/) (o usar Docker para la BD)
-- [IntelliJ IDEA](https://www.jetbrains.com/idea/) o cualquier IDE de Java
 
 ---
 
 ## 🚀 Instalación y Ejecución
 
-### 🐳 Opción 1 — Con Docker Compose (Recomendado)
+### 🐳 Opción 1 — Backend + BD con Docker Compose
 
 ```bash
 # 1. Clonar el repositorio
@@ -168,7 +222,26 @@ docker compose down -v
 
 ---
 
-### 💻 Opción 2 — Ejecución Local
+### 🎨 Opción 2 — Frontend Angular
+
+```bash
+# 1. Ir a la carpeta del frontend
+cd frontend
+
+# 2. Instalar dependencias
+npm install --legacy-peer-deps
+
+# 3. Ejecutar en modo desarrollo
+ng serve
+```
+
+**Acceder al frontend**: http://localhost:4200
+
+**Credenciales de prueba**: ver sección de usuarios.
+
+---
+
+### 💻 Opción 3 — Backend Local (sin Docker)
 
 ```bash
 # 1. Levantar solo Oracle con Docker
@@ -183,18 +256,17 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-**Acceder a Swagger**: http://localhost:8080/swagger-ui.html
-
 ---
 
 ## 🔑 Usuarios de Prueba
 
-El sistema crea automáticamente dos usuarios al primer arranque (gracias a `DataInitializer`):
+El sistema crea automáticamente tres usuarios al primer arranque (gracias a `DataInitializer`):
 
-| Usuario | Contraseña | Rol | Permisos |
-|---------|-----------|-----|----------|
-| `admin` | `admin123` | ADMIN | Acceso total |
-| `analista` | `analista123` | ANALISTA | Gestión operativa |
+| Usuario | Contraseña | Rol | Nombre completo | Permisos |
+|---------|-----------|-----|-----------------|----------|
+| `admin` | `admin123` | ADMIN | Administrador del Sistema | Supervisa todo (no crea solicitudes) |
+| `analista1` | `analista123` | ANALISTA | Ana Torres | Gestiona solo sus clientes y solicitudes |
+| `analista2` | `analista123` | ANALISTA | Carlos Ramírez | Gestiona solo sus clientes y solicitudes |
 
 ---
 
@@ -206,32 +278,47 @@ El sistema crea automáticamente dos usuarios al primer arranque (gracias a `Dat
 |--------|----------|-------------|------|
 | POST | `/api/auth/login` | Iniciar sesión, retorna JWT | ❌ |
 | POST | `/api/auth/register` | Registrar nuevo usuario | ❌ |
+| POST | `/api/auth/solicitar-reset` | Envía código al email | ❌ |
+| POST | `/api/auth/confirmar-reset` | Valida código y cambia contraseña | ❌ |
 
 ### 👥 Clientes (`/api/clientes`)
 
 | Método | Endpoint | Descripción | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/clientes` | Listar todos los clientes | ✅ |
-| POST | `/api/clientes` | Crear nuevo cliente | ✅ |
+| GET | `/api/clientes` | Listar clientes (según rol) | ✅ |
+| POST | `/api/clientes` | Crear cliente | ✅ |
 | GET | `/api/clientes/{id}` | Obtener cliente por ID | ✅ |
 | PUT | `/api/clientes/{id}` | Actualizar cliente | ✅ |
 | DELETE | `/api/clientes/{id}` | Eliminar cliente | ✅ |
+| PATCH | `/api/clientes/{id}/reasignar?nuevoAnalistaId=X` | Reasignar a otro analista | ✅ ADMIN |
 
 ### 💰 Solicitudes (`/api/solicitudes`)
 
 | Método | Endpoint | Descripción | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/solicitudes` | Listar todas las solicitudes | ✅ |
-| POST | `/api/solicitudes` | Crear solicitud (calcula cuota) | ✅ |
+| GET | `/api/solicitudes` | Listar solicitudes (según rol) | ✅ |
+| POST | `/api/solicitudes` | Crear solicitud (solo ANALISTA) | ✅ |
 | GET | `/api/solicitudes/{id}` | Obtener solicitud por ID | ✅ |
 | GET | `/api/solicitudes/estado/{estado}` | Filtrar por estado | ✅ |
 | PATCH | `/api/solicitudes/{id}/estado` | Cambiar estado | ✅ |
+
+### 👤 Usuarios (`/api/usuarios`) — Solo ADMIN
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/usuarios` | Listar todos los usuarios | ✅ ADMIN |
+| POST | `/api/usuarios` | Crear usuario | ✅ ADMIN |
+| GET | `/api/usuarios/{id}` | Obtener usuario por ID | ✅ ADMIN |
+| PUT | `/api/usuarios/{id}` | Actualizar usuario | ✅ ADMIN |
+| PATCH | `/api/usuarios/{id}/activo?activo=false` | Activar/desactivar | ✅ ADMIN |
+| GET | `/api/usuarios/analistas` | Listar solo analistas | ✅ ADMIN |
 
 ### 📊 Dashboard (`/api/dashboard`)
 
 | Método | Endpoint | Descripción | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/dashboard/resumen` | Obtener métricas agregadas | ✅ |
+| GET | `/api/dashboard/resumen` | Resumen general (según rol) | ✅ |
+| GET | `/api/dashboard/por-analista` | Métricas individuales por analista | ✅ ADMIN |
 
 ---
 
@@ -255,7 +342,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 }
 ```
 
-### 2. Crear un cliente
+### 2. Crear un cliente (como ADMIN, asignando analista)
 
 ```bash
 curl -X POST http://localhost:8080/api/clientes \
@@ -266,16 +353,17 @@ curl -X POST http://localhost:8080/api/clientes \
     "nombres": "Juan Perez",
     "telefono": "999111222",
     "direccion": "Av. Los Olivos 123",
-    "tipoNegocio": "Bodega"
+    "tipoNegocio": "Bodega",
+    "analistaId": 3
   }'
 ```
 
-### 3. Crear una solicitud de crédito
+### 3. Crear una solicitud de crédito (como ANALISTA)
 
 ```bash
 curl -X POST http://localhost:8080/api/solicitudes \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TU_TOKEN_AQUI" \
+  -H "Authorization: Bearer TU_TOKEN_ANALISTA" \
   -d '{
     "clienteId": 1,
     "montoSolicitado": 5000,
@@ -296,7 +384,7 @@ curl -X POST http://localhost:8080/api/solicitudes \
   "plazoMeses": 12,
   "cuotaMensual": 458.40,
   "estado": "PENDIENTE",
-  "fechaSolicitud": "2026-09-16T15:57:48",
+  "fechaSolicitud": "2026-09-22T15:57:48",
   "fechaActualizacion": null
 }
 ```
@@ -309,47 +397,70 @@ curl -X POST http://localhost:8080/api/solicitudes \
 
 ## 📸 Capturas de Pantalla
 
-### Vista general de la API
-Interfaz de Swagger UI mostrando los grupos de endpoints disponibles y el botón de autorización.
+### Login
+Pantalla de inicio de sesión con diseño moderno y opción de mostrar/ocultar contraseña.
+
+![Login](docs/login.png)
+
+### Dashboard del Administrador
+Vista general con métricas globales y tabla comparativa por analista.
+
+![Dashboard](docs/dashboard.png)
+
+### Dashboard por Analista
+Tabla comparativa con las métricas individuales de cada analista.
+
+![Dashboard Analistas](docs/dashboard-analistas.png)
+
+### Gestión de Clientes
+Tabla con columna de analista asignado (solo visible para admin).
+
+![Clientes](docs/clientes.png)
+
+### Gestión de Solicitudes
+Vista del administrador (con badge "Solo supervisión").
+
+![Solicitudes](docs/solicitudes.png)
+
+### Gestión de Usuarios (solo ADMIN)
+Lista de usuarios con roles, estados y acciones.
+
+![Usuarios](docs/usuarios.png)
+
+### Swagger UI
+Documentación interactiva de la API con autenticación JWT.
 
 ![Swagger Overview](docs/swagger-overview.png)
 
-### Endpoints disponibles
-Detalle de los grupos de Clientes, Solicitudes y Autenticación con todos los métodos HTTP.
-
-![Swagger Endpoints](docs/swagger-endpoints.png)
-
-### Login con JWT
-Endpoint `/api/auth/login` ejecutado exitosamente, devolviendo el token JWT y los datos del usuario.
-
-![Swagger Login](docs/swagger-login.png)
-
-### Autorización con Bearer Token
-Diálogo de autorización de Swagger UI con el token JWT configurado para todas las peticiones protegidas.
-
-![Swagger Authorize](docs/swagger-authorize.png)
 ---
 
 ## 🗺️ Roadmap
 
 ### ✅ Fase 1 — Backend (COMPLETADA)
 - [x] Autenticación JWT con roles
-- [x] CRUD Clientes
+- [x] CRUD Clientes con asignación de analista
 - [x] CRUD Solicitudes con cálculo de cuota
 - [x] Validación de transiciones de estado
-- [x] Dashboard con métricas
+- [x] **CRUD Usuarios** (solo admin)
+- [x] **Modelo multi-usuario con segregación de funciones**
+- [x] Dashboard general + dashboard por analista
 - [x] Manejo global de excepciones
+- [x] Recuperación de contraseña por email
 - [x] Documentación Swagger/OpenAPI
 - [x] Docker Compose con Oracle + Backend
 
-### 🚧 Fase 2 — Frontend Angular (EN PROGRESO)
-- [ ] Login con JWT
-- [ ] Guard de rutas
-- [ ] Interceptor HTTP para token
-- [ ] CRUD Clientes
-- [ ] CRUD Solicitudes
-- [ ] Dashboard con gráficos (Chart.js)
-- [ ] UI con Angular Material
+### ✅ Fase 2 — Frontend Angular (COMPLETADA)
+- [x] Login con JWT
+- [x] Guards (authGuard + adminGuard)
+- [x] Interceptor HTTP para token
+- [x] CRUD Clientes (con dropdown de analistas para admin)
+- [x] CRUD Solicitudes (con cambio de estado)
+- [x] CRUD Usuarios (solo admin)
+- [x] Dashboard general + por analista
+- [x] Recuperación de contraseña
+- [x] SweetAlert2 para todas las confirmaciones
+- [x] Iconos Lucide + tipografía Inter
+- [x] Design System con variables CSS
 
 ### 📋 Fase 3 — App Android Kotlin (PLANIFICADO)
 - [ ] Login
@@ -394,6 +505,16 @@ Diálogo de autorización de Swagger UI con el token JWT configurado para todas 
 - Aísla la base de datos del entorno del desarrollador
 - Facilita el despliegue en cualquier entorno
 
+### ¿Por qué segregación de funciones?
+- Refleja el modelo real de una financiera de microcréditos
+- El ADMIN supervisa y aprueba; los ANALISTAS captan y gestionan
+- Cumple con principios de auditoría y control interno
+
+### ¿Por qué Angular Signals?
+- Estado reactivo moderno (Angular 21)
+- Mejor performance que RxJS puro para estado local
+- Código más simple y declarativo
+
 ---
 
 ## 📄 Licencia
@@ -404,7 +525,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 ## 👤 Autor
 
-**Jhon Castilla**
+**Julio Edson Castillo Ita**
 - GitHub: [@jcast2023](https://github.com/jcast2023)
 - Email: jul_ed@hotmail.com
 
