@@ -3,23 +3,24 @@ spring:
     name: procredito-backend
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/procredito}
-    username: ${DB_USERNAME:procredito}
-    password: ${DB_PASSWORD:procredito123}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:oracle:thin:@localhost:1521/FREEPDB1
+    username: procredito
+    password: procredito123
+    driver-class-name: oracle.jdbc.OracleDriver
     hikari:
-      maximum-pool-size: 5
-      minimum-idle: 1
+      data-source-properties:
+        oracle.net.disableOob: true
 
   jpa:
     hibernate:
       ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    open-in-view: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
-
+        jdbc:
+          fetch_size: 100
+    open-in-view: false
   mail:
     host: smtp.gmail.com
     port: 587
@@ -33,7 +34,7 @@ spring:
             enable: true
 
 server:
-  port: ${PORT:8080}
+  port: 8080
 
 app:
   jwt:
@@ -44,5 +45,4 @@ logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
     com.procredito.backend.security.JwtAuthenticationFilter: DEBUG
-    org.hibernate.SQL: WARN
-    org.hibernate.orm.jdbc.bind: WARN
+
