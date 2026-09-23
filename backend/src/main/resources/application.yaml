@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: procredito-backend
+
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/FREEPDB1
+    username: procredito
+    password: procredito123
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      data-source-properties:
+        oracle.net.disableOob: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          fetch_size: 100
+    open-in-view: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: julio.castillo.ita@gmail.com
+    password: mchjlqehkhouyzjv
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: UHJvQ3JlZGl0b1NlY3JldEtleTIwMjZTdXBlclNlZ3VyYVBhcmFKV1RRdWVEZWJlU2VyTGFyZ2E=
+    expiration-ms: 86400000
+
+logging:
+  level:
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
+    com.procredito.backend.security.JwtAuthenticationFilter: DEBUG
+

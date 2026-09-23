@@ -1,0 +1,158 @@
+<div class="form-usuario">
+
+  <div class="page-header">
+    <div>
+      <h1>
+        @if (modoEdicion()) {
+          Editar Usuario
+        } @else {
+          Nuevo Usuario
+        }
+      </h1>
+      <p class="subtitle">
+        @if (modoEdicion()) {
+          Modifica los datos del usuario
+        } @else {
+          Registra un nuevo usuario en el sistema
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="loading">Cargando datos del usuario...</div>
+  } @else {
+    <div class="card">
+
+      <form (ngSubmit)="guardar(formUsuario)" #formUsuario="ngForm" class="form">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="username">Nombre de usuario *</label>
+            <input
+              id="username"
+              type="text"
+              name="username"
+              [ngModel]="username()"
+              (ngModelChange)="username.set($event)"
+              placeholder="analista3"
+              maxlength="50"
+              [disabled]="guardando() || modoEdicion()"
+              required
+            />
+            @if (modoEdicion()) {
+              <small class="hint">El username no se puede modificar.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="nombreCompleto">Nombre completo *</label>
+            <input
+              id="nombreCompleto"
+              type="text"
+              name="nombreCompleto"
+              [ngModel]="nombreCompleto()"
+              (ngModelChange)="nombreCompleto.set($event)"
+              placeholder="Pedro Gómez"
+              maxlength="100"
+              [disabled]="guardando()"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Correo electrónico *</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              placeholder="pedro.gomez@procredito.com"
+              maxlength="100"
+              [disabled]="guardando()"
+              required
+            />
+            <small class="hint">Se usará para recuperación de contraseña.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="rol">Rol *</label>
+            <select
+              id="rol"
+              name="rol"
+              [ngModel]="rol()"
+              (ngModelChange)="rol.set($event)"
+              [disabled]="guardando()"
+              required
+            >
+              @for (r of roles; track r) {
+                <option [ngValue]="r">{{ r }}</option>
+              }
+            </select>
+            <small class="hint">
+              @if (rol() === 'ADMIN') {
+                Acceso total al sistema.
+              } @else {
+                Solo ve y gestiona sus propios clientes.
+              }
+            </small>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="password">
+            Contraseña @if (!modoEdicion()) { * }
+          </label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+            [placeholder]="modoEdicion() ? 'Dejar vacío para no cambiar' : '••••••••'"
+            maxlength="50"
+            [disabled]="guardando()"
+            [required]="!modoEdicion()"
+          />
+
+          @if (modoEdicion()) {
+            <small class="hint">
+              Deje este campo vacío si no desea cambiar la contraseña.
+            </small>
+          } @else {
+            <small class="hint">Mínimo 6 caracteres.</small>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cancelar()"
+            [disabled]="guardando()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="guardando()"
+          >
+            @if (guardando()) {
+              Guardando...
+            } @else {
+              @if (modoEdicion()) {
+                Actualizar Usuario
+              } @else {
+                Crear Usuario
+              }
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

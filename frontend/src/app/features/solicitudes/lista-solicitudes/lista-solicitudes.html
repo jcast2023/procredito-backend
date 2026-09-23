@@ -1,0 +1,125 @@
+<div class="lista-solicitudes">
+
+  <div class="page-header">
+    <div>
+      <h1>Solicitudes de Crédito</h1>
+      <p class="subtitle">Gestión de solicitudes de microcréditos</p>
+    </div>
+    @if (!esAdmin()) {
+      <a routerLink="/solicitudes/nueva" class="btn-primary">
+        + Nueva Solicitud
+      </a>
+    } @else {
+      <div class="admin-info" title="El administrador solo supervisa y aprueba solicitudes">
+        <svg lucideInfo [size]="16"></svg>
+        <span>Solo supervisión</span>
+      </div>
+    }
+  </div>
+
+  <!-- Filtros por estado -->
+  <div class="filtros">
+    @for (estado of estados; track estado) {
+      <button
+        class="filtro-btn"
+        [class.active]="filtroEstado() === estado"
+        [class]="'filtro-btn ' + (estado !== 'TODAS' ? 'filtro-' + estado.toLowerCase() : '')"
+        (click)="cambiarFiltro(estado)"
+      >
+        {{ estado }}
+      </button>
+    }
+  </div>
+
+  @if (cargando()) {
+    <div class="loading">Cargando solicitudes...</div>
+  } @else if (error()) {
+    <div class="error-box">
+      {{ error() }}
+      <button class="btn-retry" (click)="cargarSolicitudes()">Reintentar</button>
+    </div>
+  } @else if (solicitudesFiltradas().length === 0) {
+    <div class="empty-state">
+      @if (filtroEstado() === 'TODAS') {
+        <p>No hay solicitudes registradas aún.</p>
+        @if (!esAdmin()) {
+          <a routerLink="/solicitudes/nueva" class="btn-primary">Registrar la primera solicitud</a>
+        }
+      } @else {
+        <p>No hay solicitudes en estado <strong>{{ filtroEstado() }}</strong>.</p>
+      }
+    </div>
+  } @else {
+    <div class="table-container">
+      <table class="tabla-solicitudes">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th class="num">Monto</th>
+            <th class="num">Tasa</th>
+            <th class="num">Plazo</th>
+            <th class="num">Cuota</th>
+            <th>Estado</th>
+            <th class="col-actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sol of solicitudesFiltradas(); track sol.id) {
+            <tr>
+              <td><strong>#{{ sol.id }}</strong></td>
+              <td>
+                <div class="cliente-info">
+                  <span class="cliente-nombre">{{ sol.clienteNombres }}</span>
+                  <span class="cliente-doc">{{ sol.clienteDocumento }}</span>
+                </div>
+              </td>
+              <td class="num">S/ {{ sol.montoSolicitado | number:'1.2-2' }}</td>
+              <td class="num">{{ sol.tasaInteres }}%</td>
+              <td class="num">{{ sol.plazoMeses }} meses</td>
+              <td class="num"><strong>S/ {{ sol.cuotaMensual | number:'1.2-2' }}</strong></td>
+              <td>
+                <span class="estado-badge" [class]="claseEstado(sol.estado)">
+                  {{ sol.estado }}
+                </span>
+              </td>
+              <td class="col-actions">
+                @if (transicionesValidas(sol.estado).length > 0) {
+                  @for (nuevoEstado of transicionesValidas(sol.estado); track nuevoEstado) {
+                    <button
+                      class="btn-action"
+                      [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
+                      [title]="'Cambiar a ' + nuevoEstado"
+                      (click)="cambiarEstado(sol, nuevoEstado)"
+                    >
+                      @switch (nuevoEstado) {
+                        @case ('APROBADO') {
+                          <svg lucideCheck [size]="14"></svg>
+                          Aprobar
+                        }
+                        @case ('RECHAZADO') {
+                          <svg lucideX [size]="14"></svg>
+                          Rechazar
+                        }
+                        @case ('DESEMBOLSADO') {
+                          <svg lucideBanknote [size]="14"></svg>
+                          Desembolsar
+                        }
+                      }
+                    </button>
+                  }
+                } @else {
+                  <span class="sin-acciones">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="total">
+      Mostrando {{ solicitudesFiltradas().length }} de {{ solicitudes().length }} solicitud(es)
+    </p>
+  }
+</div>
