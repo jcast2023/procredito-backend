@@ -11,9 +11,9 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins(
-                        "http://localhost:4200",   // Angular en desarrollo
-                        "http://localhost:3000",   // por si acaso
-                        "http://127.0.0.1:4200"
+                        "http://localhost:4200",
+                        "http://127.0.0.1:4200",
+                        "https://tu-frontend.onrender.com"
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
