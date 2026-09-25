@@ -9,7 +9,8 @@ import lombok.Data;
 public class ClienteRequest {
 
     @NotBlank(message = "El documento es obligatorio")
-    @Pattern(regexp = "\\d{8}", message = "El DNI debe tener exactamente 8 dígitos")
+    @Pattern(regexp = "^(\\d{8}|\\d{11})$", message = "El documento debe ser DNI (8 dígitos) o RUC (11 dígitos)")
+
     private String documento;
 
     @NotBlank(message = "Los nombres son obligatorios")
