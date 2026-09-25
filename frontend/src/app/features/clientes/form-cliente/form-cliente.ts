@@ -169,8 +169,8 @@ export class FormClienteComponent implements OnInit {
       next: (existe) => {
         if (existe) {
           Swal.fire({
-            title: 'DNI ya registrado',
-            text: `Ya existe un cliente con el DNI "${doc}".`,
+            title: 'Documento ya registrado',
+            text: `Ya existe un cliente con el documento "${doc}".`,
             icon: 'warning',
             confirmButtonColor: '#1e3a8a'
           });
