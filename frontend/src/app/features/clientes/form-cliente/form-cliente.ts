@@ -110,8 +110,8 @@ export class FormClienteComponent implements OnInit {
     const tipo = this.tipoNegocio().trim();
 
     // Validación de documento: exactamente 8 dígitos
-    if (!/^\d{8}$/.test(doc)) {
-      Swal.fire({
+    if (!/^\d{8}$|^\d{11}$/.test(doc)) {
+        Swal.fire({
         title: 'Documento inválido',
         text: 'El DNI debe tener exactamente 8 dígitos numéricos.',
         icon: 'warning',
