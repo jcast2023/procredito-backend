@@ -84,35 +84,39 @@
                 </span>
               </td>
               <td class="col-actions">
-                    @if (transicionesVisibles(sol).length > 0) {
-                      @for (nuevoEstado of transicionesVisibles(sol); track nuevoEstado) {
+  @if (transicionesVisibles(sol).length > 0) {
+    @for (nuevoEstado of transicionesVisibles(sol); track nuevoEstado) {
+      <button
+        class="btn-action"
+        [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
+        [class.disabled]="!puedeActuar(sol, nuevoEstado)"
+        [disabled]="!puedeActuar(sol, nuevoEstado)"
+        [title]="puedeActuar(sol, nuevoEstado)
+          ? 'Cambiar a ' + nuevoEstado
+          : 'Solo el administrador puede ' + nuevoEstado.toLowerCase() + ' esta solicitud'"
+        (click)="puedeActuar(sol, nuevoEstado) && cambiarEstado(sol, nuevoEstado)"
+      >
+        @switch (nuevoEstado) {
+          @case ('APROBADO') {
+            <svg lucideCheck [size]="14"></svg>
+            Aprobar
+          }
+          @case ('RECHAZADO') {
+            <svg lucideX [size]="14"></svg>
+            Rechazar
+          }
+          @case ('DESEMBOLSADO') {
+            <svg lucideBanknote [size]="14"></svg>
+            Desembolsar
+          }
+        }
+      </button>
+    }
+  } @else {
+    <span class="sin-acciones">—</span>
+  }
+</td>
 
-                    <button
-                      class="btn-action"
-                      [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
-                      [title]="'Cambiar a ' + nuevoEstado"
-                      (click)="cambiarEstado(sol, nuevoEstado)"
-                    >
-                      @switch (nuevoEstado) {
-                        @case ('APROBADO') {
-                          <svg lucideCheck [size]="14"></svg>
-                          Aprobar
-                        }
-                        @case ('RECHAZADO') {
-                          <svg lucideX [size]="14"></svg>
-                          Rechazar
-                        }
-                        @case ('DESEMBOLSADO') {
-                          <svg lucideBanknote [size]="14"></svg>
-                          Desembolsar
-                        }
-                      }
-                    </button>
-                  }
-                } @else {
-                  <span class="sin-acciones">—</span>
-                }
-              </td>
             </tr>
           }
         </tbody>
