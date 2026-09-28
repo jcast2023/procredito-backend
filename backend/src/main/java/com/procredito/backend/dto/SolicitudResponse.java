@@ -20,4 +20,5 @@ public class SolicitudResponse {
     private EstadoSolicitud estado;
     private LocalDateTime fechaSolicitud;
     private LocalDateTime fechaActualizacion;
+    private Boolean requiereAdmin;
 }
