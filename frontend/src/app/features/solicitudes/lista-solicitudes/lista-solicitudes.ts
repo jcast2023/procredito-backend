@@ -192,11 +192,12 @@ export class ListaSolicitudesComponent implements OnInit {
   }
 
 
-  puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
+    puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
     if (this.esAdmin()) return true;
-    if (sol.requiereAdmin) return nuevoEstado === 'RECHAZADO';
+    if (sol.requiereAdmin) return nuevoEstado !== 'APROBADO';
     return true;
   }
+
 
   claseEstado(estado: EstadoSolicitud): string {
     return 'estado-' + estado.toLowerCase();
