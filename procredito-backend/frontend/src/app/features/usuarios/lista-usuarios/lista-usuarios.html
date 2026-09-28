@@ -1,0 +1,109 @@
+<div class="lista-usuarios">
+
+  <div class="page-header">
+    <div>
+      <h1>Usuarios del Sistema</h1>
+      <p class="subtitle">Gestión de administradores y analistas</p>
+    </div>
+    <a routerLink="/usuarios/nuevo" class="btn-primary">
+      <svg lucidePlus [size]="16"></svg>
+      Nuevo Usuario
+    </a>
+  </div>
+
+  <!-- Resumen -->
+  <div class="resumen">
+    <div class="resumen-item">
+      <span class="resumen-label">Total</span>
+      <span class="resumen-value">{{ usuarios().length }}</span>
+    </div>
+    <div class="resumen-item activo">
+      <span class="resumen-label">Activos</span>
+      <span class="resumen-value">{{ totalActivos() }}</span>
+    </div>
+    <div class="resumen-item inactivo">
+      <span class="resumen-label">Inactivos</span>
+      <span class="resumen-value">{{ totalInactivos() }}</span>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="loading">Cargando usuarios...</div>
+  } @else if (error()) {
+    <div class="error-box">
+      {{ error() }}
+      <button class="btn-retry" (click)="cargarUsuarios()">Reintentar</button>
+    </div>
+  } @else if (usuarios().length === 0) {
+    <div class="empty-state">
+      <p>No hay usuarios registrados.</p>
+    </div>
+  } @else {
+    <div class="table-container">
+      <table class="tabla-usuarios">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre completo</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th class="col-actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (usuario of usuarios(); track usuario.id) {
+            <tr [class.inactivo-row]="!usuario.activo">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar" [class.admin]="usuario.rol === 'ADMIN'">
+                    @if (usuario.rol === 'ADMIN') {
+                      <svg lucideShield [size]="16"></svg>
+                    } @else {
+                      <svg lucideUser [size]="16"></svg>
+                    }
+                  </div>
+                  <span class="username">&#64;{{ usuario.username }}</span>
+                </div>
+              </td>
+              <td>{{ usuario.nombreCompleto }}</td>
+              <td class="email-cell">{{ usuario.email || '—' }}</td>
+              <td>
+                <span class="rol-badge" [class.admin]="usuario.rol === 'ADMIN'">
+                  {{ usuario.rol }}
+                </span>
+              </td>
+              <td>
+                <span class="estado-badge" [class.activo]="usuario.activo" [class.inactivo]="!usuario.activo">
+                  {{ usuario.activo ? 'ACTIVO' : 'INACTIVO' }}
+                </span>
+              </td>
+              <td class="col-actions">
+                <a
+                  [routerLink]="['/usuarios', usuario.id, 'editar']"
+                  class="btn-action btn-edit"
+                  title="Editar"
+                >
+                  <svg lucidePencil [size]="16"></svg>
+                </a>
+                <button
+                  class="btn-action"
+                  [class.btn-activar]="!usuario.activo"
+                  [class.btn-desactivar]="usuario.activo"
+                  [title]="usuario.activo ? 'Desactivar' : 'Activar'"
+                  (click)="cambiarActivo(usuario)"
+                >
+                  @if (usuario.activo) {
+                    <svg lucideUserX [size]="16"></svg>
+                  } @else {
+                    <svg lucideUserCheck [size]="16"></svg>
+                  }
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
