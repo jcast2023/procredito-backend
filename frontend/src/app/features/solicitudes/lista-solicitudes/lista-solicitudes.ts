@@ -187,6 +187,12 @@ export class ListaSolicitudesComponent implements OnInit {
     return base; // montos bajos: el analista ve todo
   }
 
+  puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
+    if (this.esAdmin()) return true;
+    if (sol.requiereAdmin) return nuevoEstado === 'RECHAZADO';
+    return true;
+  }
+
   claseEstado(estado: EstadoSolicitud): string {
     return 'estado-' + estado.toLowerCase();
   }
