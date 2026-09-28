@@ -8,7 +8,7 @@
 [![JWT](https://img.shields.io/badge/Auth-JWT-black?logo=jsonwebtokens)](https://jwt.io/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-> **Sistema full-stack de gestión de microcréditos para microempresas**, inspirado en el modelo de negocio de financieras peruanas como ProEmpresa. Backend Spring Boot 4 + Oracle 23ai + Frontend Angular 21. Permite registrar microempresarios, gestionar solicitudes de crédito con cálculo automático de cuotas (sistema francés), validar transiciones de estado, administrar usuarios y obtener métricas agregadas por analista.
+> **Sistema full-stack de gestión de microcréditos para microempresas, inspirado en el modelo de negocio de financieras peruanas. Backend Spring Boot 4 + PostgreSQL (Neon) + Frontend Angular 21 + App móvil Android (Jetpack Compose). Permite registrar microempresarios, gestionar solicitudes de crédito con cálculo automático de cuotas (sistema francés), validar transiciones de estado, administrar usuarios por roles y obtener métricas agregadas por analista.
 
 ---
 
@@ -34,25 +34,33 @@ El sistema está **completamente dockerizado**, lo que permite levantar el backe
 | **Lenguaje** | Java | 21 (LTS) |
 | **Framework** | Spring Boot | 4.1.1 |
 | **Persistencia** | Spring Data JPA + Hibernate | 7.4.5 |
-| **Base de Datos** | Oracle Database Free | 23ai |
+| **Base de Datos** | PostgreSQL (Neon) | 16 |
 | **Seguridad** | Spring Security + JWT (JJWT) | 7.1.1 / 0.12.6 |
 | **Documentación** | SpringDoc OpenAPI (Swagger UI) | 2.8.5 |
 | **Build** | Maven | 3.9 |
-| **Contenedores** | Docker + Docker Compose | Latest |
 | **Testing** | JUnit 5 + Mockito | (planificado) |
 
-### Frontend
+### Frontend Web(Angular)
 
 | Capa | Tecnología | Versión |
 |------|-----------|---------|
 | **Lenguaje** | TypeScript | 5.6+ |
 | **Framework** | Angular | 21.x |
-| **UI Components** | Angular Material | 21.x |
-| **Iconos** | Lucide Angular | 1.46 |
-| **Gráficos** | Chart.js + ng2-charts | Latest |
 | **Alertas** | SweetAlert2 | Latest |
 | **Estilos** | SCSS + Design System con variables CSS | — |
 | **Tipografía** | Inter (Google Fonts) | — |
+
+---
+### App Móvil (Android)
+
+| Capa | Tecnología | Versión |
+|------|-----------|---------|
+| **Lenguaje** | Kotlin | 2.1 |
+| **UI** | Jetpack Compose + Material 3 | Latest |
+| **Navegación** | Navigation Compose | 2.8.4 |
+| **Networking** | Retrofit 2 + Gson + OkHttp | 2.1.1.0 |
+| **Persistencia local** | DataStore Preferences | 1.1.1 |
+| **Concurrencia** | Corrutinas | 1.9.0 |
 
 ---
 
@@ -95,7 +103,7 @@ com.procredito.backend
 [Repository] ─────────────── Spring Data JPA
       │
       ▼
-[Oracle Database]
+[PostgreSQL (Neon)]
 ```
 
 ---
@@ -107,7 +115,7 @@ com.procredito.backend
 - ✅ Contraseñas encriptadas con BCrypt
 - ✅ Roles: `ADMIN` y `ANALISTA`
 - ✅ Filtro JWT con manejo robusto de tokens inválidos
-- ✅ Recuperación de contraseña por email (token con expiración)
+- ✅ Recuperación de contraseña por email (código con expiración de 15 minutos)
 - ✅ Usuarios inactivos bloqueados para login
 
 ### 🎭 Roles y Permisos (RBAC + Segregación de Funciones)
@@ -122,14 +130,27 @@ com.procredito.backend
 | Crear solicitud de crédito | ❌ | ✅ (solo para sus clientes) |
 | Ver todas las solicitudes | ✅ | ❌ |
 | Ver solo sus solicitudes | — | ✅ |
-| Aprobar/Rechazar/Desembolsar | ✅ (supervisión) | ✅ (solo las suyas) |
+| Aprobar solicitud | ✅ (supervisión) | ❌ |
+| Rechazar solicitud | ✅ (supervisión) | ✅ (solo las suyas) |
+| Desembolsar solicitud | ✅ (supervisión) | ❌ |
 | Gestionar usuarios | ✅ | ❌ |
 | Ver dashboard global | ✅ | ❌ |
 | Ver dashboard por analista | ✅ | ❌ |
 | Ver su propio dashboard | ✅ | ✅ |
 
-> 💡 **Regla de negocio clave**: el **ADMIN supervisa** y puede **intervenir** en cualquier solicitud, pero **NO capta clientes ni crea solicitudes**. Esto refleja el modelo real de una financiera de microcréditos.
+> 💡 Regla de negocio clave: el ADMIN supervisa y aprueba; los ANALISTAS captan clientes y crean solicitudes, pero requieren la intervención del ADMIN para aprobar y desembolsar.
 
+### ⚠️ Umbral de Monto (S/ 15,000)
+El sistema aplica una regla de negocio por umbral de monto sobre la aprobación y el desembolso:
+| Monto | Rol | Aprobar | Rechazar | Desembolsar |
+|--------|:-----:|:--------:|
+| < S/ 15,000| ANALISTA | ✅ | ✅ | ✅ |
+| ≥ S/ 15,000| ANALISTA | ❌ | ✅ | ❌ |
+| ≥ S/ 15,000| ANALISTA | ✅ | ✅ | ✅ |
+
+El ANALISTA puede crear solicitudes de cualquier monto (incluidas ≥ S/ 15,000).
+En montos altos, el analista solo puede rechazar; la aprobación y el desembolso son exclusivos del ADMIN.
+En montos bajos, el analista gestiona todo el ciclo por sí mismo.
 ### 👥 Gestión de Clientes (Microempresarios)
 - ✅ Crear cliente con validación de documento único (DNI/RUC)
 - ✅ Listar clientes (según rol: admin ve todos, analista solo los suyos)
@@ -146,6 +167,7 @@ com.procredito.backend
   - `PENDIENTE` → `APROBADO` o `RECHAZADO`
   - `APROBADO` → `DESEMBOLSADO`
   - `RECHAZADO` y `DESEMBOLSADO` son terminales
+- ✅ Simulador de cuotas en la pantalla de nueva solicitud (web y móvil)
 
 ### 👤 Gestión de Usuarios (solo ADMIN)
 - ✅ Crear usuarios (ADMIN / ANALISTA)
@@ -160,6 +182,15 @@ com.procredito.backend
 - ✅ Promedios de monto y cuota
 - ✅ **Dashboard por analista** (solo admin): tabla comparativa con métricas individuales
 
+### 📱 App Móvil (Android)
+- ✅ Login con JWT (token persistido en DataStore)
+- ✅ Dashboard con métricas y resumen por analista
+- ✅ Gestión de clientes (listar, crear, editar, eliminar, buscar)
+- ✅ Gestión de solicitudes (listar, filtrar por estado, crear, cambiar estado según rol)
+- ✅ Recuperación de contraseña
+- ✅ Navegación con Jetpack Compose Navigation
+- ✅ Retrofit + corrutinas para consumo de la API
+  
 ### 🛡️ Calidad de Código
 - ✅ Manejo global de excepciones (`@RestControllerAdvice`)
 - ✅ Validación con Bean Validation (`@NotBlank`, `@NotNull`, `@Email`, etc.)
@@ -174,55 +205,48 @@ com.procredito.backend
 
 ## 📦 Requisitos Previos
 
-### Opción 1: Ejecutar con Docker (Backend + BD)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado
-- Al menos 4 GB de RAM disponible para Docker
+### Backend
+- Java 21 JDK
+- Maven3.9+
+- PostgreSQL (Neon, o local)
 
-### Opción 2: Ejecutar todo localmente
-- [Java 21 JDK](https://adoptium.net/)
-- [Maven 3.9+](https://maven.apache.org/)
-- [Node.js 22+](https://nodejs.org/) y npm
-- [Angular CLI 21+](https://angular.io/cli)
-- [Oracle Database Free 23ai](https://www.oracle.com/database/free/) (o usar Docker para la BD)
+### Frontend Web
+- Node.js22+ y npm
+- Angular CLI 21+
+
+### App Móvil
+- Android Studio (con SDK36)
+- JDK 21
+
 
 ---
 
 ## 🚀 Instalación y Ejecución
 
-### 🐳 Opción 1 — Backend + BD con Docker Compose
+### Backend local
 
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/jcast2023/procredito-backend.git
 cd procredito-backend
 
-# 2. Levantar todo el stack (Oracle + Backend)
-docker compose up -d --build
+# 2. Configurar variables de entorno (PostgreSQL/Neon)
+export DB_URL=jdbc:postgresql://HOST:5432/neondb?sslmode=require
+export DB_USERNAME=neondb_owner
+export DB_PASSWORD=TU_PASSWORD
 
-# 3. Esperar a que Oracle esté "healthy" (~3 minutos la primera vez)
-docker compose ps
+# 3. Ejecutar la aplicación
+cd backend
+./mvnw spring-boot:run
 
-# 4. Ver logs del backend
-docker compose logs -f backend
 ```
-
-Una vez que veas `Started BackendApplication in X seconds`, la API está lista.
 
 **Acceder a Swagger**: http://localhost:8080/swagger-ui.html
 
-**Detener todo**:
-```bash
-docker compose down
-```
-
-**Detener y borrar datos**:
-```bash
-docker compose down -v
-```
 
 ---
 
-### 🎨 Opción 2 — Frontend Angular
+### Frontend Angular
 
 ```bash
 # 1. Ir a la carpeta del frontend
@@ -237,27 +261,16 @@ ng serve
 
 **Acceder al frontend**: http://localhost:4200
 
-**Credenciales de prueba**: ver sección de usuarios.
-
----
-
-### 💻 Opción 3 — Backend Local (sin Docker)
+### App Móvil
 
 ```bash
-# 1. Levantar solo Oracle con Docker
-cd procredito-backend
-docker compose up -d oracle
+# 1. Abre el proyecto en Android Studio.
 
-# 2. Esperar a que Oracle esté healthy
-docker compose ps
+# 2. Configura ApiConfig.BASE_URL con la URL del backend.
 
-# 3. Ejecutar la aplicación
-cd backend
-./mvnw spring-boot:run
+# 3. Ejecuta en un emulador o dispositivo.
+# 4. Para generar el APK firmado: Build → Generate Signed Bundle / APK → APK → release.
 ```
-
----
-
 ## 🔑 Usuarios de Prueba
 
 El sistema crea automáticamente tres usuarios al primer arranque (gracias a `DataInitializer`):
@@ -427,6 +440,13 @@ Lista de usuarios con roles, estados y acciones.
 
 ![Usuarios](docs/usuarios.png)
 
+### App Móvil (Android)
+Capturas de login, dashboard, clientes y solicitudes con estados coloreados.
+![Móvil Login](docs/movil-login.png 
+![Móvil Dashboard](docs/movil-dashboard.png 
+![Móvil Clientes](docs/movil-clientes.png 
+![Móvil Solicitudes](docs/movil-solicitudes.png
+
 ### Swagger UI
 Documentación interactiva de la API con autenticación JWT.
 
@@ -443,11 +463,11 @@ Documentación interactiva de la API con autenticación JWT.
 - [x] Validación de transiciones de estado
 - [x] **CRUD Usuarios** (solo admin)
 - [x] **Modelo multi-usuario con segregación de funciones**
+- [x] **Regla de negocio por umbral (S/ 15,000)**
 - [x] Dashboard general + dashboard por analista
 - [x] Manejo global de excepciones
 - [x] Recuperación de contraseña por email
 - [x] Documentación Swagger/OpenAPI
-- [x] Docker Compose con Oracle + Backend
 
 ### ✅ Fase 2 — Frontend Angular (COMPLETADA)
 - [x] Login con JWT
@@ -459,23 +479,23 @@ Documentación interactiva de la API con autenticación JWT.
 - [x] Dashboard general + por analista
 - [x] Recuperación de contraseña
 - [x] SweetAlert2 para todas las confirmaciones
-- [x] Iconos Lucide + tipografía Inter
 - [x] Design System con variables CSS
 
-### 📋 Fase 3 — App Android Kotlin (PLANIFICADO)
-- [ ] Login
-- [ ] Lista de solicitudes con estados coloreados
-- [ ] Detalle de solicitud
-- [ ] Crear nueva solicitud
-- [ ] Cambiar estado (solo ADMIN/ANALISTA)
-- [ ] UI con Jetpack Compose
+### 📋 Fase 3 — App Android Kotlin (COMPLETADA)
+- [ ] Login con JWT + DataStore
+- [ ] Dashboard con métricas y resumen por analista
+- [ ] Gestión de clientes (listar, crear, editar, eliminar, buscar)
+- [ ] Gestión de solicitudes (listar, filtrar, crear, cambiar estado según rol y umbral)
+- [ ] Navegación con Compose Navigation
+- [ ] Recuperación de contraseña
+- [ ] APK firmado generado
 
 ### 🧪 Fase 4 — Testing (PLANIFICADO)
 - [ ] Tests unitarios con JUnit 5 + Mockito
 - [ ] Tests de integración
 - [ ] Cobertura > 70%
 
-### ☁️ Fase 5 — Despliegue (PLANIFICADO)
+### ☁️ Fase 5 — Despliegue (PARCIALMENTE COMPLETADA)
 - [ ] Backend en Render
 - [ ] Frontend en Vercel
 - [ ] APK en GitHub Releases
@@ -485,10 +505,10 @@ Documentación interactiva de la API con autenticación JWT.
 
 ## 🏗️ Decisiones de Diseño
 
-### ¿Por qué Oracle Free 23ai?
-- Cumple con el requisito del puesto (experiencia en Oracle)
-- Versión moderna con soporte para JSON, boolean nativo, etc.
-- Imagen `gvenzl/oracle-free` optimizada para Docker
+### ¿Por qué PostgreSQL (Neon)?
+- Base de datos en la nube, gratis y con alta disponibilidad
+- Compatible con JPA/Hibernate sin configuración extra
+- Ideal para despliegue en Render
 
 ### ¿Por qué JWT y no sesiones?
 - Stateless: ideal para APIs REST escalables
@@ -500,11 +520,6 @@ Documentación interactiva de la API con autenticación JWT.
 - Facilita testing con mocks
 - Convención ampliamente adoptada en empresas
 
-### ¿Por qué Docker Compose?
-- Reproducibilidad total: `docker compose up` y listo
-- Aísla la base de datos del entorno del desarrollador
-- Facilita el despliegue en cualquier entorno
-
 ### ¿Por qué segregación de funciones?
 - Refleja el modelo real de una financiera de microcréditos
 - El ADMIN supervisa y aprueba; los ANALISTAS captan y gestionan
@@ -514,6 +529,15 @@ Documentación interactiva de la API con autenticación JWT.
 - Estado reactivo moderno (Angular 21)
 - Mejor performance que RxJS puro para estado local
 - Código más simple y declarativo
+
+### ¿Por qué el umbral de S/ 15,000?
+- Simula una política de crédito real donde los montos altos requieren mayor supervisión
+- Demuestra manejo de reglas de negocio complejas y validación por rol
+
+### ¿Por qué Jetpack Compose para el móvil?
+- UI moderna y declarativa (estándar actual de Android)
+- Reutiliza la lógica con ViewModel + StateFlow
+- Un solo código para la lógica de negocio compartida con el backend
 
 ---
 
@@ -527,13 +551,13 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 **Julio Edson Castillo Ita**
 - GitHub: [@jcast2023](https://github.com/jcast2023)
-- Email: jul_ed@hotmail.com
+- Email: julio.castillo.ita@gmail.com
 
 ---
 
 ## 🙏 Agradecimientos
 
-- Inspirado en el modelo de negocio de **Financiera ProEmpresa** (Perú)
+- Inspirado en el modelo de negocio de **Financieras peruanas de microcréditos** (Perú)
 - Construido como proyecto de portafolio profesional
 - Diseñado siguiendo las mejores prácticas de la industria financiera
 
