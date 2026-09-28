@@ -174,6 +174,19 @@ export class ListaSolicitudesComponent implements OnInit {
     }
   }
 
+  // Transiciones visibles según rol + monto (regla del umbral)
+  transicionesVisibles(sol: Solicitud): EstadoSolicitud[] {
+    const base = this.transicionesValidas(sol.estado);
+    if (this.esAdmin()) {
+      return base; // el admin ve todo
+    }
+    // Analista: si requiereAdmin, oculta APROBADO y DESEMBOLSADO, deja RECHAZADO
+    if (sol.requiereAdmin) {
+      return base.filter(e => e === 'RECHAZADO');
+    }
+    return base; // montos bajos: el analista ve todo
+  }
+
   claseEstado(estado: EstadoSolicitud): string {
     return 'estado-' + estado.toLowerCase();
   }
