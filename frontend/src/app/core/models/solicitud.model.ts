@@ -12,6 +12,7 @@ export interface Solicitud {
   estado: EstadoSolicitud;
   fechaSolicitud: string;
   fechaActualizacion: string | null;
+  requiereAdmin: boolean;
 }
 
 export interface SolicitudRequest {
