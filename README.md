@@ -442,10 +442,10 @@ Lista de usuarios con roles, estados y acciones.
 
 ### App Móvil (Android)
 Capturas de login, dashboard, clientes y solicitudes con estados coloreados.
-![Móvil Login](docs/movil-login.png 
-![Móvil Dashboard](docs/movil-dashboard.png 
-![Móvil Clientes](docs/movil-clientes.png 
-![Móvil Solicitudes](docs/movil-solicitudes.png
+![Móvil Login](docs/movil-login.png) 
+![Móvil Dashboard](docs/movil-dashboard.png) 
+![Móvil Clientes](docs/movil-clientes.png) 
+![Móvil Solicitudes](docs/movil-solicitudes.png)
 
 ### Swagger UI
 Documentación interactiva de la API con autenticación JWT.
