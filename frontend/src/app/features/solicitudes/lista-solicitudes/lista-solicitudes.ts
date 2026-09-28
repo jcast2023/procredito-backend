@@ -112,7 +112,7 @@ export class ListaSolicitudesComponent implements OnInit {
         });
         this.cargarSolicitudes();
       },
-            error: (err) => {
+                  error: (err) => {
         const mensaje = err?.error?.mensaje
           || err?.error?.error
           || 'No se pudo cambiar el estado de la solicitud.';
@@ -124,6 +124,8 @@ export class ListaSolicitudesComponent implements OnInit {
         });
         console.error(err);
       }
+    });
+  }
 
 
   private configMensaje(nuevoEstado: EstadoSolicitud): {
