@@ -1,0 +1,46 @@
+
+
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    container_name: procredito-oracle
+    environment:
+      ORACLE_PASSWORD: ProCredito2026
+      APP_USER: procredito
+      APP_USER_PASSWORD: procredito123
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - procredito-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: procredito-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@oracle:1521/FREEPDB1
+      SPRING_DATASOURCE_USERNAME: procredito
+      SPRING_DATASOURCE_PASSWORD: procredito123
+    ports:
+      - "8080:8080"
+    depends_on:
+      oracle:
+        condition: service_healthy
+    networks:
+      - procredito-net
+
+networks:
+  procredito-net:
+    driver: bridge
+
+volumes:
+  oracle-data:
