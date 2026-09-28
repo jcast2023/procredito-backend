@@ -84,8 +84,9 @@
                 </span>
               </td>
               <td class="col-actions">
-                @if (transicionesValidas(sol.estado).length > 0) {
-                  @for (nuevoEstado of transicionesValidas(sol.estado); track nuevoEstado) {
+                    @if (transicionesVisibles(sol).length > 0) {
+                      @for (nuevoEstado of transicionesVisibles(sol); track nuevoEstado) {
+
                     <button
                       class="btn-action"
                       [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
