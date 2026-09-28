@@ -112,17 +112,19 @@ export class ListaSolicitudesComponent implements OnInit {
         });
         this.cargarSolicitudes();
       },
-      error: (err) => {
+            error: (err) => {
+        const mensaje = err?.error?.mensaje
+          || err?.error?.error
+          || 'No se pudo cambiar el estado de la solicitud.';
         Swal.fire({
-          title: 'Error',
-          html: err?.error?.error || 'No se pudo cambiar el estado de la solicitud.',
+          title: 'Acción no permitida',
+          html: mensaje,
           icon: 'error',
           confirmButtonColor: '#dc2626'
         });
         console.error(err);
       }
-    });
-  }
+
 
   private configMensaje(nuevoEstado: EstadoSolicitud): {
     icono: 'question' | 'warning' | 'success' | 'info';
