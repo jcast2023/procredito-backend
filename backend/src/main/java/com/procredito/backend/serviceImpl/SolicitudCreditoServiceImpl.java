@@ -183,17 +183,17 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
     // REGLA DE NEGOCIO: montos ≥ S/ 15,000 solo los aprueba/desembolsa el ADMIN
     // ============================================================
     private void validarUmbralAdmin(SolicitudCredito solicitud, Usuario usuarioActual, EstadoSolicitud nuevoEstado) {
-        boolean montoAlto = solicitud.getMontoSolicitado().compareTo(UMBRAL_ADMIN) >= 0;
-        boolean accionRestringida = nuevoEstado == EstadoSolicitud.APROBADO
-                || nuevoEstado == EstadoSolicitud.DESEMBOLSADO;
+    boolean montoAlto = solicitud.getMontoSolicitado().compareTo(UMBRAL_ADMIN) >= 0;
+    boolean accionRestringida = nuevoEstado == EstadoSolicitud.APROBADO;
 
-        if (montoAlto && accionRestringida && usuarioActual.getRol() != Rol.ADMIN) {
-            throw new BusinessException(
-                    "Solo el administrador puede aprobar o desembolsar solicitudes de S/ "
-                            + UMBRAL_ADMIN + " o más."
-            );
-        }
+    if (montoAlto && accionRestringida && usuarioActual.getRol() != Rol.ADMIN) {
+        throw new BusinessException(
+                "Solo el administrador puede aprobar solicitudes de S/ "
+                        + UMBRAL_ADMIN + " o más."
+        );
     }
+}
+
 
     // ============================================================
     // REGLAS DE TRANSICIÓN
