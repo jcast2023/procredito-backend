@@ -142,15 +142,16 @@ com.procredito.backend
 
 ### ⚠️ Umbral de Monto (S/ 15,000)
 El sistema aplica una regla de negocio por umbral de monto sobre la aprobación y el desembolso:
-| Monto | Rol | Aprobar | Rechazar | Desembolsar |
-|--------|:-----:|:--------:||:-----:|:--------:|
-| < S/ 15,000| ANALISTA | ✅ | ✅ | ✅ |
-| ≥ S/ 15,000| ANALISTA | ❌ | ✅ | ❌ |
-| ≥ S/ 15,000| ANALISTA | ✅ | ✅ | ✅ |
+
+Monto	Rol	Aprobar	Rechazar	Desembolsar
+< S/ 15,000	ANALISTA	✅	✅	✅
+≥ S/ 15,000	ANALISTA	❌	✅	❌
+≥ S/ 15,000	ADMIN	      ✅	✅   ✅
 
 El ANALISTA puede crear solicitudes de cualquier monto (incluidas ≥ S/ 15,000).
 En montos altos, el analista solo puede rechazar; la aprobación y el desembolso son exclusivos del ADMIN.
 En montos bajos, el analista gestiona todo el ciclo por sí mismo.
+
 ### 👥 Gestión de Clientes (Microempresarios)
 - ✅ Crear cliente con validación de documento único (DNI/RUC)
 - ✅ Listar clientes (según rol: admin ve todos, analista solo los suyos)
@@ -442,6 +443,7 @@ Lista de usuarios con roles, estados y acciones.
 
 ### App Móvil (Android)
 Capturas de login, dashboard, clientes y solicitudes con estados coloreados.
+
 ![Móvil Login](docs/movil-login.png) 
 ![Móvil Dashboard](docs/movil-dashboard.png) 
 ![Móvil Clientes](docs/movil-clientes.png) 
