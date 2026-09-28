@@ -143,7 +143,7 @@ com.procredito.backend
 ### ⚠️ Umbral de Monto (S/ 15,000)
 El sistema aplica una regla de negocio por umbral de monto sobre la aprobación y el desembolso:
 | Monto | Rol | Aprobar | Rechazar | Desembolsar |
-|--------|:-----:|:--------:|
+|--------|:-----:|:--------:||:-----:|:--------:|
 | < S/ 15,000| ANALISTA | ✅ | ✅ | ✅ |
 | ≥ S/ 15,000| ANALISTA | ❌ | ✅ | ❌ |
 | ≥ S/ 15,000| ANALISTA | ✅ | ✅ | ✅ |
