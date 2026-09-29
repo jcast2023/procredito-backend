@@ -23,6 +23,8 @@ export class ListaSolicitudesComponent implements OnInit {
   private readonly solicitudService = inject(SolicitudService);
   private readonly authService = inject(AuthService);
 
+  private readonly UMBRAL_ADMIN = 15000;
+
   readonly solicitudes = signal<Solicitud[]>([]);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
@@ -112,7 +114,7 @@ export class ListaSolicitudesComponent implements OnInit {
         });
         this.cargarSolicitudes();
       },
-                  error: (err) => {
+      error: (err) => {
         const mensaje = err?.error?.mensaje
           || err?.error?.error
           || 'No se pudo cambiar el estado de la solicitud.';
@@ -126,7 +128,6 @@ export class ListaSolicitudesComponent implements OnInit {
       }
     });
   }
-
 
   private configMensaje(nuevoEstado: EstadoSolicitud): {
     icono: 'question' | 'warning' | 'success' | 'info';
@@ -178,26 +179,28 @@ export class ListaSolicitudesComponent implements OnInit {
     }
   }
 
-  // Transiciones visibles según rol + monto (regla del umbral)
-transicionesVisibles(sol: Solicitud): EstadoSolicitud[] {
-  const base = this.transicionesValidas(sol.estado);
-  if (this.esAdmin()) return base;
+  // Transiciones visibles según rol + monto (regla del umbral S/ 15,000)
+  transicionesVisibles(sol: Solicitud): EstadoSolicitud[] {
+    const base = this.transicionesValidas(sol.estado);
+    if (this.esAdmin()) return base;
 
-  // Analista: en montos altos (>= S/ 15,000) solo puede rechazar
-  if (sol.requiereAdmin === true) {
-    return base.filter(e => e !== 'APROBADO' && e !== 'DESEMBOLSADO');
+    // Monto alto: el analista solo puede rechazar (ni aprobar ni desembolsar)
+    const montoAlto = sol.montoSolicitado >= this.UMBRAL_ADMIN || sol.requiereAdmin === true;
+    if (montoAlto) {
+      return base.filter(e => e !== 'APROBADO' && e !== 'DESEMBOLSADO');
+    }
+    return base; // montos bajos: el analista ve todo
   }
-  return base; // montos bajos: el analista ve todo
-}
 
-puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
-  if (this.esAdmin()) return true;
-  if (sol.requiereAdmin === true) {
-    return nuevoEstado !== 'APROBADO' && nuevoEstado !== 'DESEMBOLSADO';
+  puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
+    if (this.esAdmin()) return true;
+
+    const montoAlto = sol.montoSolicitado >= this.UMBRAL_ADMIN || sol.requiereAdmin === true;
+    if (montoAlto) {
+      return nuevoEstado !== 'APROBADO' && nuevoEstado !== 'DESEMBOLSADO';
+    }
+    return true;
   }
-  return true;
-}
-
 
   claseEstado(estado: EstadoSolicitud): string {
     return 'estado-' + estado.toLowerCase();
