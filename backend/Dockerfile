@@ -8,10 +8,10 @@ COPY pom.xml .
 # Descargar dependencias (se cachea si no cambia el pom.xml)
 RUN mvn dependency:go-offline -B
 
-# Copiar el código fuente
+# Copiar el codigo fuente
 COPY src ./src
 
-# Compilar y empaquetar (sin ejecutar tests para ir rápido)
+# Compilar y empaquetar (sin ejecutar tests para ir rapido)
 RUN mvn clean package -DskipTests
 
 # ETAPA 2: Runtime liviano (solo JRE)
