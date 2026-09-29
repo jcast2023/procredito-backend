@@ -16,20 +16,20 @@
       </div>
     }
   </div>
-  <!-- Buscador de solicitudes -->
-<div class="buscador-solicitudes">
-  <input
-    type="search"
-    [value]="busqueda()"
-    (input)="busqueda.set($any($event.target).value)"
-    placeholder="Buscar por nombre, DNI, ID o monto..."
-    aria-label="Buscar solicitudes"
-  />
-  @if (busqueda()) {
-    <button type="button" (click)="limpiarBusqueda()" title="Limpiar búsqueda">✕</button>
-  }
-</div>
 
+  <!-- Buscador de solicitudes -->
+  <div class="buscador-solicitudes">
+    <input
+      type="search"
+      [value]="busqueda()"
+      (input)="busqueda.set($any($event.target).value)"
+      placeholder="Buscar por nombre, DNI, ID o monto..."
+      aria-label="Buscar solicitudes"
+    />
+    @if (busqueda()) {
+      <button type="button" (click)="limpiarBusqueda()" title="Limpiar búsqueda">✕</button>
+    }
+  </div>
 
   <!-- Filtros por estado -->
   <div class="filtros">
@@ -54,7 +54,10 @@
     </div>
   } @else if (solicitudesFiltradas().length === 0) {
     <div class="empty-state">
-      @if (filtroEstado() === 'TODAS') {
+      @if (busqueda().trim()) {
+        <p>No se encontraron solicitudes para "<strong>{{ busqueda() }}</strong>".</p>
+        <button class="btn-primary" (click)="limpiarBusqueda()">Limpiar búsqueda</button>
+      } @else if (filtroEstado() === 'TODAS') {
         <p>No hay solicitudes registradas aún.</p>
         @if (!esAdmin()) {
           <a routerLink="/solicitudes/nueva" class="btn-primary">Registrar la primera solicitud</a>
@@ -98,39 +101,38 @@
                 </span>
               </td>
               <td class="col-actions">
-  @if (transicionesVisibles(sol).length > 0) {
-    @for (nuevoEstado of transicionesVisibles(sol); track nuevoEstado) {
-      <button
-        class="btn-action"
-        [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
-        [class.disabled]="!puedeActuar(sol, nuevoEstado)"
-        [disabled]="!puedeActuar(sol, nuevoEstado)"
-        [title]="puedeActuar(sol, nuevoEstado)
-          ? 'Cambiar a ' + nuevoEstado
-          : 'Solo el administrador puede ' + nuevoEstado.toLowerCase() + ' esta solicitud'"
-        (click)="puedeActuar(sol, nuevoEstado) && cambiarEstado(sol, nuevoEstado)"
-      >
-        @switch (nuevoEstado) {
-          @case ('APROBADO') {
-            <svg lucideCheck [size]="14"></svg>
-            Aprobar
-          }
-          @case ('RECHAZADO') {
-            <svg lucideX [size]="14"></svg>
-            Rechazar
-          }
-          @case ('DESEMBOLSADO') {
-            <svg lucideBanknote [size]="14"></svg>
-            Desembolsar
-          }
-        }
-      </button>
-    }
-  } @else {
-    <span class="sin-acciones">—</span>
-  }
-</td>
-
+                @if (transicionesVisibles(sol).length > 0) {
+                  @for (nuevoEstado of transicionesVisibles(sol); track nuevoEstado) {
+                    <button
+                      class="btn-action"
+                      [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
+                      [class.disabled]="!puedeActuar(sol, nuevoEstado)"
+                      [disabled]="!puedeActuar(sol, nuevoEstado)"
+                      [title]="puedeActuar(sol, nuevoEstado)
+                        ? 'Cambiar a ' + nuevoEstado
+                        : 'Solo el administrador puede ' + nuevoEstado.toLowerCase() + ' esta solicitud'"
+                      (click)="puedeActuar(sol, nuevoEstado) && cambiarEstado(sol, nuevoEstado)"
+                    >
+                      @switch (nuevoEstado) {
+                        @case ('APROBADO') {
+                          <svg lucideCheck [size]="14"></svg>
+                          Aprobar
+                        }
+                        @case ('RECHAZADO') {
+                          <svg lucideX [size]="14"></svg>
+                          Rechazar
+                        }
+                        @case ('DESEMBOLSADO') {
+                          <svg lucideBanknote [size]="14"></svg>
+                          Desembolsar
+                        }
+                      }
+                    </button>
+                  }
+                } @else {
+                  <span class="sin-acciones">—</span>
+                }
+              </td>
             </tr>
           }
         </tbody>
