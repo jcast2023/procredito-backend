@@ -19,6 +19,22 @@ export class ListaClientesComponent implements OnInit {
   readonly clientes = signal<Cliente[]>([]);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
+readonly busqueda = signal('');
+
+readonly clientesFiltrados = computed(() => {
+  const q = this.busqueda().trim().toLowerCase();
+  if (!q) return this.clientes();
+
+  return this.clientes().filter(c =>
+    (c.documento ?? '').toLowerCase().includes(q) ||
+    (c.nombres ?? '').toLowerCase().includes(q)
+
+  );
+});
+
+onBuscar(event: Event): void {
+  this.busqueda.set((event.target as HTMLInputElement).value);
+}
 
   readonly esAdmin = computed(() => this.authService.esAdmin());
 
