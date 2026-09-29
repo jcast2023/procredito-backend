@@ -32,6 +32,9 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
     private final ClienteRepository clienteRepository;
     private final SecurityUtils securityUtils;
 
+    // Umbral: solicitudes >= S/ 15,000 solo las gestiona el ADMIN
+    private static final BigDecimal UMBRAL_ADMIN = new BigDecimal("15000");
+
     // ============================================================
     // CREAR
     // ============================================================
@@ -75,6 +78,7 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         SolicitudCredito guardada = solicitudRepository.save(solicitud);
         return mapToResponse(guardada);
     }
+
     // ============================================================
     // OBTENER POR ID
     // ============================================================
@@ -155,6 +159,16 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
             if (!analistaId.equals(usuarioActual.getId())) {
                 throw new BusinessException("No tiene permiso para cambiar el estado de esta solicitud.");
             }
+        }
+
+        // ============================================================
+        // REGLA DE NEGOCIO: solo el ADMIN gestiona solicitudes >= S/ 15,000
+        // ============================================================
+        boolean montoAlto = solicitud.getMontoSolicitado().compareTo(UMBRAL_ADMIN) >= 0;
+        if (montoAlto && usuarioActual.getRol() != Rol.ADMIN) {
+            throw new BusinessException(
+                    "Solo el administrador puede gestionar solicitudes de S/ 15,000 o más"
+            );
         }
 
         EstadoSolicitud estadoActual = solicitud.getEstado();

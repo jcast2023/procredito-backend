@@ -16,6 +16,20 @@
       </div>
     }
   </div>
+  <!-- Buscador de solicitudes -->
+<div class="buscador-solicitudes">
+  <input
+    type="search"
+    [value]="busqueda()"
+    (input)="busqueda.set($any($event.target).value)"
+    placeholder="Buscar por nombre, DNI, ID o monto..."
+    aria-label="Buscar solicitudes"
+  />
+  @if (busqueda()) {
+    <button type="button" (click)="limpiarBusqueda()" title="Limpiar búsqueda">✕</button>
+  }
+</div>
+
 
   <!-- Filtros por estado -->
   <div class="filtros">

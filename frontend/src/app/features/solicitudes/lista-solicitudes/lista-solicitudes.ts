@@ -29,6 +29,7 @@ export class ListaSolicitudesComponent implements OnInit {
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly filtroEstado = signal<EstadoSolicitud | 'TODAS'>('TODAS');
+  readonly busqueda = signal('');
 
   readonly esAdmin = computed(() => this.authService.esAdmin());
 
@@ -57,10 +58,32 @@ export class ListaSolicitudesComponent implements OnInit {
     });
   }
 
+  // Filtra por estado + texto de búsqueda (nombre, DNI, ID o monto)
   solicitudesFiltradas(): Solicitud[] {
     const filtro = this.filtroEstado();
-    if (filtro === 'TODAS') return this.solicitudes();
-    return this.solicitudes().filter(s => s.estado === filtro);
+    const texto = this.busqueda().trim().toLowerCase();
+
+    let lista = this.solicitudes();
+    if (filtro !== 'TODAS') {
+      lista = lista.filter(s => s.estado === filtro);
+    }
+    if (texto.length > 0) {
+      lista = lista.filter(s => this.coincideConBusqueda(s, texto));
+    }
+    return lista;
+  }
+
+  private coincideConBusqueda(s: Solicitud, texto: string): boolean {
+    return (
+      s.clienteNombres.toLowerCase().includes(texto) ||
+      s.clienteDocumento.toLowerCase().includes(texto) ||
+      String(s.id).includes(texto) ||
+      s.montoSolicitado.toFixed(2).includes(texto)
+    );
+  }
+
+  limpiarBusqueda(): void {
+    this.busqueda.set('');
   }
 
   cambiarFiltro(estado: EstadoSolicitud | 'TODAS'): void {
@@ -125,6 +148,7 @@ export class ListaSolicitudesComponent implements OnInit {
           confirmButtonColor: '#dc2626'
         });
         console.error(err);
+        this.cargarSolicitudes();
       }
     });
   }
@@ -184,22 +208,15 @@ export class ListaSolicitudesComponent implements OnInit {
     const base = this.transicionesValidas(sol.estado);
     if (this.esAdmin()) return base;
 
-    // Monto alto: el analista solo puede rechazar (ni aprobar ni desembolsar)
     const montoAlto = sol.montoSolicitado >= this.UMBRAL_ADMIN || sol.requiereAdmin === true;
-    if (montoAlto) {
-      return base.filter(e => e !== 'APROBADO' && e !== 'DESEMBOLSADO');
-    }
-    return base; // montos bajos: el analista ve todo
+    if (montoAlto) return []; // el analista no gestiona montos altos
+    return base;
   }
 
   puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
     if (this.esAdmin()) return true;
-
     const montoAlto = sol.montoSolicitado >= this.UMBRAL_ADMIN || sol.requiereAdmin === true;
-    if (montoAlto) {
-      return nuevoEstado !== 'APROBADO' && nuevoEstado !== 'DESEMBOLSADO';
-    }
-    return true;
+    return !montoAlto;
   }
 
   claseEstado(estado: EstadoSolicitud): string {
