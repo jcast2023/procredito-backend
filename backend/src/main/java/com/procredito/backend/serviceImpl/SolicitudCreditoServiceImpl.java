@@ -32,9 +32,6 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
     private final ClienteRepository clienteRepository;
     private final SecurityUtils securityUtils;
 
-    // Monto a partir del cual solo el ADMIN puede aprobar o desembolsar
-    private static final BigDecimal UMBRAL_ADMIN = new BigDecimal("15000");
-
     // ============================================================
     // CREAR
     // ============================================================
@@ -43,7 +40,9 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
     public SolicitudResponse crear(SolicitudRequest request) {
         Usuario usuarioActual = securityUtils.getUsuarioAutenticado();
 
+        // ============================================================
         // BLOQUEO: el ADMIN no crea solicitudes, solo supervisa.
+        // ============================================================
         if (usuarioActual.getRol() == Rol.ADMIN) {
             throw new BusinessException(
                     "El administrador no puede crear solicitudes. " +
@@ -76,7 +75,6 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         SolicitudCredito guardada = solicitudRepository.save(solicitud);
         return mapToResponse(guardada);
     }
-
     // ============================================================
     // OBTENER POR ID
     // ============================================================
@@ -162,9 +160,6 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
         EstadoSolicitud estadoActual = solicitud.getEstado();
         EstadoSolicitud nuevoEstado = request.getNuevoEstado();
 
-        // REGLA DEL UMBRAL: validar antes de la transición
-        validarUmbralAdmin(solicitud, usuarioActual, nuevoEstado);
-
         if (!esTransicionValida(estadoActual, nuevoEstado)) {
             throw new BusinessException(
                     "Transición de estado no permitida: " + estadoActual + " → " + nuevoEstado +
@@ -178,22 +173,6 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
 
         return mapToResponse(solicitudRepository.save(solicitud));
     }
-
-    // ============================================================
-    // REGLA DE NEGOCIO: montos ≥ S/ 15,000 solo los aprueba/desembolsa el ADMIN
-    // ============================================================
-    private void validarUmbralAdmin(SolicitudCredito solicitud, Usuario usuarioActual, EstadoSolicitud nuevoEstado) {
-    boolean montoAlto = solicitud.getMontoSolicitado().compareTo(UMBRAL_ADMIN) >= 0;
-    boolean accionRestringida = nuevoEstado == EstadoSolicitud.APROBADO;
-
-    if (montoAlto && accionRestringida && usuarioActual.getRol() != Rol.ADMIN) {
-        throw new BusinessException(
-                "Solo el administrador puede aprobar solicitudes de S/ "
-                        + UMBRAL_ADMIN + " o más."
-        );
-    }
-}
-
 
     // ============================================================
     // REGLAS DE TRANSICIÓN
@@ -254,7 +233,6 @@ public class SolicitudCreditoServiceImpl implements SolicitudCreditoService {
                 .estado(s.getEstado())
                 .fechaSolicitud(s.getFechaSolicitud())
                 .fechaActualizacion(s.getFechaActualizacion())
-                .requiereAdmin(s.getMontoSolicitado().compareTo(UMBRAL_ADMIN) >= 0)
                 .build();
     }
 }
