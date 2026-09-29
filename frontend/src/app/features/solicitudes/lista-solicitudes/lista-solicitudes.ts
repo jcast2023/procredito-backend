@@ -179,24 +179,24 @@ export class ListaSolicitudesComponent implements OnInit {
   }
 
   // Transiciones visibles según rol + monto (regla del umbral)
-    transicionesVisibles(sol: Solicitud): EstadoSolicitud[] {
-    const base = this.transicionesValidas(sol.estado);
-    if (this.esAdmin()) {
-      return base; // el admin ve todo
-    }
-    // Analista: en montos altos oculta APROBADO, pero deja RECHAZADO y DESEMBOLSADO
-    if (sol.requiereAdmin) {
-      return base.filter(e => e !== 'APROBADO');
-    }
-    return base; // montos bajos: el analista ve todo
-  }
+transicionesVisibles(sol: Solicitud): EstadoSolicitud[] {
+  const base = this.transicionesValidas(sol.estado);
+  if (this.esAdmin()) return base;
 
-
-    puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
-    if (this.esAdmin()) return true;
-    if (sol.requiereAdmin) return nuevoEstado !== 'APROBADO';
-    return true;
+  // Analista: en montos altos (>= S/ 15,000) solo puede rechazar
+  if (sol.requiereAdmin === true) {
+    return base.filter(e => e !== 'APROBADO' && e !== 'DESEMBOLSADO');
   }
+  return base; // montos bajos: el analista ve todo
+}
+
+puedeActuar(sol: Solicitud, nuevoEstado: EstadoSolicitud): boolean {
+  if (this.esAdmin()) return true;
+  if (sol.requiereAdmin === true) {
+    return nuevoEstado !== 'APROBADO' && nuevoEstado !== 'DESEMBOLSADO';
+  }
+  return true;
+}
 
 
   claseEstado(estado: EstadoSolicitud): string {
