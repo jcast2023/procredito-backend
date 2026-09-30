@@ -5,16 +5,26 @@ import {
   LucideInfo,
   LucideCheck,
   LucideX,
-  LucideBanknote
+  LucideBanknote,
+  LucideShieldAlert,
+  LucideArrowUp,
+  LucideArrowDown,
+  LucideDownload
 } from '@lucide/angular';
 import Swal from 'sweetalert2';
 import { SolicitudService } from '../../../core/services/solicitud.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Solicitud, EstadoSolicitud } from '../../../core/models';
 
+type ColumnaOrden = 'id' | 'clienteNombres' | 'montoSolicitado' | 'tasaInteres' | 'plazoMeses' | 'cuotaMensual' | 'estado';
+
 @Component({
   selector: 'app-lista-solicitudes',
-  imports: [RouterLink, DecimalPipe, LucideInfo, LucideCheck, LucideX, LucideBanknote],
+  imports: [
+    RouterLink, DecimalPipe,
+    LucideInfo, LucideCheck, LucideX, LucideBanknote,
+    LucideShieldAlert, LucideArrowUp, LucideArrowDown, LucideDownload
+  ],
   templateUrl: './lista-solicitudes.html',
   styleUrl: './lista-solicitudes.scss'
 })
@@ -24,18 +34,73 @@ export class ListaSolicitudesComponent implements OnInit {
   private readonly authService = inject(AuthService);
 
   private readonly UMBRAL_ADMIN = 15000;
+  private readonly POR_PAGINA = 10;
 
   readonly solicitudes = signal<Solicitud[]>([]);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly filtroEstado = signal<EstadoSolicitud | 'TODAS'>('TODAS');
   readonly busqueda = signal('');
+  readonly columnaOrden = signal<ColumnaOrden>('id');
+  readonly ordenAsc = signal(true);
+  readonly paginaActual = signal(1);
 
   readonly esAdmin = computed(() => this.authService.esAdmin());
 
   readonly estados: (EstadoSolicitud | 'TODAS')[] = [
     'TODAS', 'PENDIENTE', 'APROBADO', 'RECHAZADO', 'DESEMBOLSADO'
   ];
+
+  // ============ FILTRADO + BÚSQUEDA + ORDEN (computed) ============
+  readonly solicitudesFiltradas = computed(() => {
+    const filtro = this.filtroEstado();
+    const texto = this.busqueda().trim().toLowerCase();
+
+    let lista = this.solicitudes();
+    if (filtro !== 'TODAS') {
+      lista = lista.filter(s => s.estado === filtro);
+    }
+    if (texto.length > 0) {
+      lista = lista.filter(s => this.coincideConBusqueda(s, texto));
+    }
+
+    // Orden por columna
+    const col = this.columnaOrden();
+    const asc = this.ordenAsc();
+    const dir = asc ? 1 : -1;
+
+    lista = [...lista].sort((a, b) => {
+      let va: string | number;
+      let vb: string | number;
+      switch (col) {
+        case 'id': va = a.id; vb = b.id; break;
+        case 'clienteNombres': va = a.clienteNombres.toLowerCase(); vb = b.clienteNombres.toLowerCase(); break;
+        case 'montoSolicitado': va = a.montoSolicitado; vb = b.montoSolicitado; break;
+        case 'tasaInteres': va = a.tasaInteres; vb = b.tasaInteres; break;
+        case 'plazoMeses': va = a.plazoMeses; vb = b.plazoMeses; break;
+        case 'cuotaMensual': va = a.cuotaMensual; vb = b.cuotaMensual; break;
+        case 'estado': va = a.estado; vb = b.estado; break;
+        default: va = a.id; vb = b.id;
+      }
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+
+    return lista;
+  });
+
+  // ============ PAGINACIÓN ============
+  readonly totalPaginas = computed(() =>
+    Math.max(1, Math.ceil(this.solicitudesFiltradas().length / this.POR_PAGINA))
+  );
+
+  readonly solicitudesPagina = computed(() => {
+    const inicio = (this.paginaActual() - 1) * this.POR_PAGINA;
+    return this.solicitudesFiltradas().slice(inicio, inicio + this.POR_PAGINA);
+  });
+
+  readonly hayResultados = computed(() => this.solicitudesFiltradas().length > 0);
 
   ngOnInit(): void {
     this.cargarSolicitudes();
@@ -49,6 +114,7 @@ export class ListaSolicitudesComponent implements OnInit {
       next: (data) => {
         this.solicitudes.set(data);
         this.cargando.set(false);
+        this.paginaActual.set(1);
       },
       error: (err) => {
         this.error.set('No se pudo cargar la lista de solicitudes.');
@@ -58,28 +124,21 @@ export class ListaSolicitudesComponent implements OnInit {
     });
   }
 
-  // Filtra por estado + texto de búsqueda (nombre, DNI, ID o monto)
-  solicitudesFiltradas(): Solicitud[] {
-    const filtro = this.filtroEstado();
-    const texto = this.busqueda().trim().toLowerCase();
-
-    let lista = this.solicitudes();
-    if (filtro !== 'TODAS') {
-      lista = lista.filter(s => s.estado === filtro);
-    }
-    if (texto.length > 0) {
-      lista = lista.filter(s => this.coincideConBusqueda(s, texto));
-    }
-    return lista;
-  }
-
+  // Búsqueda normalizada: "17,000" o "17.000" también encuentra "17000.00"
   private coincideConBusqueda(s: Solicitud, texto: string): boolean {
+    const textoNormalizado = this.normalizarNumero(texto);
     return (
       s.clienteNombres.toLowerCase().includes(texto) ||
       s.clienteDocumento.toLowerCase().includes(texto) ||
       String(s.id).includes(texto) ||
-      s.montoSolicitado.toFixed(2).includes(texto)
+      s.montoSolicitado.toFixed(2).includes(texto) ||
+      (textoNormalizado.length > 0 && s.montoSolicitado.toFixed(2).replace('.', '').includes(textoNormalizado))
     );
+  }
+
+  // Quita comas y puntos para comparar montos sin formato
+  private normalizarNumero(texto: string): string {
+    return texto.replace(/[.,]/g, '');
   }
 
   limpiarBusqueda(): void {
@@ -88,8 +147,60 @@ export class ListaSolicitudesComponent implements OnInit {
 
   cambiarFiltro(estado: EstadoSolicitud | 'TODAS'): void {
     this.filtroEstado.set(estado);
+    this.paginaActual.set(1);
   }
 
+  // ============ ORDEN POR COLUMNA ============
+  ordenarPor(columna: ColumnaOrden): void {
+    if (this.columnaOrden() === columna) {
+      this.ordenAsc.set(!this.ordenAsc());
+    } else {
+      this.columnaOrden.set(columna);
+      this.ordenAsc.set(true);
+    }
+    this.paginaActual.set(1);
+  }
+
+  esColumnaActiva(columna: ColumnaOrden): boolean {
+    return this.columnaOrden() === columna;
+  }
+
+  // ============ PAGINACIÓN ============
+  cambiarPagina(pagina: number): void {
+    if (pagina >= 1 && pagina <= this.totalPaginas()) {
+      this.paginaActual.set(pagina);
+    }
+  }
+
+  // ============ EXPORTAR CSV ============
+  exportarCsv(): void {
+    const filas = this.solicitudesFiltradas().map(s => [
+      s.id,
+      s.clienteNombres,
+      s.clienteDocumento,
+      s.montoSolicitado.toFixed(2),
+      s.tasaInteres.toFixed(2),
+      s.plazoMeses,
+      s.cuotaMensual.toFixed(2),
+      s.estado
+    ]);
+
+    const encabezados = ['ID', 'Cliente', 'Documento', 'Monto', 'Tasa %', 'Plazo (meses)', 'Cuota', 'Estado'];
+    const csv = [encabezados, ...filas]
+      .map(f => f.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+
+    // BOM para que Excel abra bien los acentos
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `solicitudes_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ============ CAMBIO DE ESTADO (sin cambios) ============
   async cambiarEstado(solicitud: Solicitud, nuevoEstado: EstadoSolicitud): Promise<void> {
     const { icono, titulo, color, textoBoton } = this.configMensaje(nuevoEstado);
 
@@ -161,33 +272,13 @@ export class ListaSolicitudesComponent implements OnInit {
   } {
     switch (nuevoEstado) {
       case 'APROBADO':
-        return {
-          icono: 'question',
-          titulo: '¿Aprobar esta solicitud?',
-          color: '#3b82f6',
-          textoBoton: 'Sí, aprobar'
-        };
+        return { icono: 'question', titulo: '¿Aprobar esta solicitud?', color: '#3b82f6', textoBoton: 'Sí, aprobar' };
       case 'RECHAZADO':
-        return {
-          icono: 'warning',
-          titulo: '¿Rechazar esta solicitud?',
-          color: '#dc2626',
-          textoBoton: 'Sí, rechazar'
-        };
+        return { icono: 'warning', titulo: '¿Rechazar esta solicitud?', color: '#dc2626', textoBoton: 'Sí, rechazar' };
       case 'DESEMBOLSADO':
-        return {
-          icono: 'success',
-          titulo: '¿Desembolsar esta solicitud?',
-          color: '#10b981',
-          textoBoton: 'Sí, desembolsar'
-        };
+        return { icono: 'success', titulo: '¿Desembolsar esta solicitud?', color: '#10b981', textoBoton: 'Sí, desembolsar' };
       default:
-        return {
-          icono: 'question',
-          titulo: '¿Cambiar estado?',
-          color: '#64748b',
-          textoBoton: 'Confirmar'
-        };
+        return { icono: 'question', titulo: '¿Cambiar estado?', color: '#64748b', textoBoton: 'Confirmar' };
     }
   }
 
@@ -209,7 +300,7 @@ export class ListaSolicitudesComponent implements OnInit {
     if (this.esAdmin()) return base;
 
     const montoAlto = sol.montoSolicitado >= this.UMBRAL_ADMIN || sol.requiereAdmin === true;
-    if (montoAlto) return []; // el analista no gestiona montos altos
+    if (montoAlto) return [];
     return base;
   }
 
@@ -221,5 +312,10 @@ export class ListaSolicitudesComponent implements OnInit {
 
   claseEstado(estado: EstadoSolicitud): string {
     return 'estado-' + estado.toLowerCase();
+  }
+
+  // Helper para el badge "Requiere Admin"
+  requiereAdmin(sol: Solicitud): boolean {
+    return sol.montoSolicitado >= this.UMBRAL_ADMIN || sol.requiereAdmin === true;
   }
 }

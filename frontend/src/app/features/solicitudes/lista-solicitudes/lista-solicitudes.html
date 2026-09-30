@@ -37,7 +37,10 @@
       <button
         class="filtro-btn"
         [class.active]="filtroEstado() === estado"
-        [class]="'filtro-btn ' + (estado !== 'TODAS' ? 'filtro-' + estado.toLowerCase() : '')"
+        [class.filtro-pendiente]="estado === 'PENDIENTE'"
+        [class.filtro-aprobado]="estado === 'APROBADO'"
+        [class.filtro-rechazado]="estado === 'RECHAZADO'"
+        [class.filtro-desembolsado]="estado === 'DESEMBOLSADO'"
         (click)="cambiarFiltro(estado)"
       >
         {{ estado }}
@@ -67,27 +70,120 @@
       }
     </div>
   } @else {
+    <!-- Barra de herramientas: exportar CSV -->
+    <div class="toolbar">
+      <button class="btn-exportar" (click)="exportarCsv()" title="Descargar las solicitudes visibles en CSV">
+        <svg lucideDownload [size]="14"></svg>
+        Exportar CSV
+      </button>
+    </div>
+
     <div class="table-container">
       <table class="tabla-solicitudes">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th class="num">Monto</th>
-            <th class="num">Tasa</th>
-            <th class="num">Plazo</th>
-            <th class="num">Cuota</th>
-            <th>Estado</th>
+            <th class="sortable" (click)="ordenarPor('id')">
+              ID
+              @if (esColumnaActiva('id')) {
+                <span class="sort-icon">
+                  @if (ordenAsc()) {
+                    <svg lucideArrowUp [size]="14"></svg>
+                  } @else {
+                    <svg lucideArrowDown [size]="14"></svg>
+                  }
+                </span>
+              }
+            </th>
+            <th class="sortable" (click)="ordenarPor('clienteNombres')">
+              Cliente
+              @if (esColumnaActiva('clienteNombres')) {
+                <span class="sort-icon">
+                  @if (ordenAsc()) {
+                    <svg lucideArrowUp [size]="14"></svg>
+                  } @else {
+                    <svg lucideArrowDown [size]="14"></svg>
+                  }
+                </span>
+              }
+            </th>
+            <th class="num sortable" (click)="ordenarPor('montoSolicitado')">
+              Monto
+              @if (esColumnaActiva('montoSolicitado')) {
+                <span class="sort-icon">
+                  @if (ordenAsc()) {
+                    <svg lucideArrowUp [size]="14"></svg>
+                  } @else {
+                    <svg lucideArrowDown [size]="14"></svg>
+                  }
+                </span>
+              }
+            </th>
+            <th class="num sortable" (click)="ordenarPor('tasaInteres')">
+              Tasa
+              @if (esColumnaActiva('tasaInteres')) {
+                <span class="sort-icon">
+                  @if (ordenAsc()) {
+                    <svg lucideArrowUp [size]="14"></svg>
+                  } @else {
+                    <svg lucideArrowDown [size]="14"></svg>
+                  }
+                </span>
+              }
+            </th>
+            <th class="num sortable" (click)="ordenarPor('plazoMeses')">
+              Plazo
+              @if (esColumnaActiva('plazoMeses')) {
+                <span class="sort-icon">
+                  @if (ordenAsc()) {
+                    <svg lucideArrowUp [size]="14"></svg>
+                  } @else {
+                    <svg lucideArrowDown [size]="14"></svg>
+                  }
+                </span>
+              }
+            </th>
+            <th class="num sortable" (click)="ordenarPor('cuotaMensual')">
+              Cuota
+              @if (esColumnaActiva('cuotaMensual')) {
+                <span class="sort-icon">
+                  @if (ordenAsc()) {
+                    <svg lucideArrowUp [size]="14"></svg>
+                  } @else {
+                    <svg lucideArrowDown [size]="14"></svg>
+                  }
+                </span>
+              }
+            </th>
+            <th class="sortable" (click)="ordenarPor('estado')">
+              Estado
+              @if (esColumnaActiva('estado')) {
+                <span class="sort-icon">
+                  @if (ordenAsc()) {
+                    <svg lucideArrowUp [size]="14"></svg>
+                  } @else {
+                    <svg lucideArrowDown [size]="14"></svg>
+                  }
+                </span>
+              }
+            </th>
             <th class="col-actions">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (sol of solicitudesFiltradas(); track sol.id) {
+          @for (sol of solicitudesPagina(); track sol.id) {
             <tr>
               <td><strong>#{{ sol.id }}</strong></td>
               <td>
                 <div class="cliente-info">
-                  <span class="cliente-nombre">{{ sol.clienteNombres }}</span>
+                  <span class="cliente-nombre">
+                    {{ sol.clienteNombres }}
+                    @if (requiereAdmin(sol)) {
+                      <span class="badge-admin" title="Solo el administrador puede gestionar esta solicitud">
+                        <svg lucideShieldAlert [size]="12"></svg>
+                        Requiere Admin
+                      </span>
+                    }
+                  </span>
                   <span class="cliente-doc">{{ sol.clienteDocumento }}</span>
                 </div>
               </td>
@@ -105,7 +201,9 @@
                   @for (nuevoEstado of transicionesVisibles(sol); track nuevoEstado) {
                     <button
                       class="btn-action"
-                      [class]="'btn-action btn-' + nuevoEstado.toLowerCase()"
+                      [class.btn-aprobado]="nuevoEstado === 'APROBADO'"
+                      [class.btn-rechazado]="nuevoEstado === 'RECHAZADO'"
+                      [class.btn-desembolsado]="nuevoEstado === 'DESEMBOLSADO'"
                       [class.disabled]="!puedeActuar(sol, nuevoEstado)"
                       [disabled]="!puedeActuar(sol, nuevoEstado)"
                       [title]="puedeActuar(sol, nuevoEstado)
@@ -139,8 +237,29 @@
       </table>
     </div>
 
+    <!-- Paginación -->
+    @if (totalPaginas() > 1) {
+      <div class="paginacion">
+        <button
+          class="btn-pagina"
+          (click)="cambiarPagina(paginaActual() - 1)"
+          [disabled]="paginaActual() === 1"
+        >
+          ← Anterior
+        </button>
+        <span class="info-pagina">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+        <button
+          class="btn-pagina"
+          (click)="cambiarPagina(paginaActual() + 1)"
+          [disabled]="paginaActual() === totalPaginas()"
+        >
+          Siguiente →
+        </button>
+      </div>
+    }
+
     <p class="total">
-      Mostrando {{ solicitudesFiltradas().length }} de {{ solicitudes().length }} solicitud(es)
+      Mostrando {{ solicitudesPagina().length }} de {{ solicitudesFiltradas().length }} solicitud(es)
     </p>
   }
 </div>
